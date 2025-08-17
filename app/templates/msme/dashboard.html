@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}MSME Dashboard{% endblock %}
+
+{% block content %}
+<h2>MSME Dashboard</h2>
+<p>Welcome, {{ current_user.name }}!</p>
+
+<section class="dashboard-actions">
+    <div>
+        <a href="#" class="btn">Create Order</a>
+    </div>
+    <div>
+        <a href="#" class="btn">View Orders</a>
+    </div>
+    <div>
+        <a href="#" class="btn">Ping Drivers</a>
+    </div>
+    <div>
+        <a href="#" class="btn">Track Deliveries</a>
+    </div>
+</section>
+{% endblock %}

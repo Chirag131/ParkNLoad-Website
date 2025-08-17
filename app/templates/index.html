@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}ParkNLoad - Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Welcome to ParkNLoad</h1>
+    <p>Smart logistics for MSMEs and Drivers.</p>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('auth.login') }}" class="btn">Login with Google</a>
+    {% else %}
+        <a href="{{ url_for('msme.home') }}" class="btn">Go to Dashboard</a>
+    {% endif %}
+</section>
+{% endblock %}
