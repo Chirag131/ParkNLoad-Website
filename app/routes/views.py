@@ -20,6 +20,5 @@ def complete_profile():
     if form.validate_on_submit():
         current_user.phone = form.phone.data
         db.session.commit()
-        return redirect(url_for('msme.home'))  # <-- this should work now
-    
+        return redirect(url_for('msme.dashboard'))  
     return render_template('complete_profile.html', form=form)

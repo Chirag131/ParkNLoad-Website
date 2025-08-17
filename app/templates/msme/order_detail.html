@@ -1,0 +1,14 @@
+<h2>Order #{{ order.id }}</h2>
+<p>Status: {{ order.status }}</p>
+<p>Description: {{ order.description }}</p>
+<p>Pickup: {{ order.pickup_location }}</p>
+<p>Dropoff: {{ order.dropoff_location }}</p>
+<p>Amount: ₹{{ order.amount }}</p>
+<p>Driver: {{ order.driver.name if order.driver else "Not assigned yet" }}</p>
+{% if order.driver %}
+  <p>Driver Phone: {{ order.driver.phone }}</p>
+  {% if order.status == "In Transit" %}
+    <p>Current Location: {{ order.driver.current_lat }}, {{ order.driver.current_lng }}</p>
+    <!-- Here you can embed a Google Maps iframe -->
+  {% endif %}
+{% endif %}

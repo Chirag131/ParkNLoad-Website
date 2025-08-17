@@ -42,7 +42,7 @@ def authorize_google():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        user = User(email=email, name=name)
+        user = User(email=email, name=name)  
         db.session.add(user)
         db.session.commit()
     else:
@@ -51,7 +51,7 @@ def authorize_google():
             db.session.commit()
 
     login_user(user)
-    return redirect(url_for('views.complete_profile' if not user.phone else 'msme.home'))
+    return redirect(url_for('views.complete_profile' if not user.email else 'msme.dashboard'))
 
 @auth.route('/logout')
 def logout():

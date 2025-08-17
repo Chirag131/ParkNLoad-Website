@@ -1,0 +1,15 @@
+<h1>My Orders</h1>
+<nav>
+  <a href="{{ url_for('msme.dashboard') }}">Dashboard</a> |
+  <a href="{{ url_for('msme.add_order') }}">Add New Order</a>
+</nav>
+
+<ul>
+  {% for order in orders %}
+    <li>
+      <a href="{{ url_for('msme.order_detail', order_id=order.id) }}">
+        Order #{{ order.id }} - {{ order.description }}
+      </a>
+    </li>
+  {% endfor %}
+</ul>
