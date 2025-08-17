@@ -31,7 +31,7 @@ def create_app():
 
     create_db(app)
 
-    from .models import User, Order
+    from .models import User, Order, Driver
     return app
 
 

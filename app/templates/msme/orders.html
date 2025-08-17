@@ -8,8 +8,12 @@
   {% for order in orders %}
     <li>
       <a href="{{ url_for('msme.order_detail', order_id=order.id) }}">
-        Order #{{ order.id }} - {{ order.description }}
+        Order #{{ order.id }} - {{ order.package_name }} 
+        ({{ order.package_description if order.package_description else 'No description' }}) 
+        on {{ order.date.strftime('%d-%m-%Y') }}
       </a>
     </li>
+  {% else %}
+    <li>No orders found.</li>
   {% endfor %}
 </ul>

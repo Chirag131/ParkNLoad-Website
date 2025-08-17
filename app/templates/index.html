@@ -9,7 +9,7 @@
     {% if not current_user.is_authenticated %}
         <a href="{{ url_for('auth.login') }}" class="btn">Login with Google</a>
     {% else %}
-        <a href="{{ url_for('msme.home') }}" class="btn">Go to Dashboard</a>
+        <a href="{{ url_for('msme.dashboard') }}" class="btn">Go to Dashboard</a>
     {% endif %}
 </section>
 {% endblock %}
