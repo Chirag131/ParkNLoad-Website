@@ -19,6 +19,11 @@
         </div>
     </div>
 
+    <!-- Order Type Indicator -->
+    <div id="order-type-indicator" class="order-type-indicator outgoing">
+        📤 Outgoing Order (Pickup from external location)
+    </div>
+
     <div class="form-container">
         <form method="POST" class="order-form">
             {{ form.hidden_tag() }}
@@ -320,6 +325,29 @@
     color: #666;
 }
 
+.order-type-indicator {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.order-type-indicator.incoming {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+.order-type-indicator.outgoing {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
 .form-container {
     background: white;
     border-radius: 8px;
@@ -449,6 +477,10 @@
 </style>
 
 <script>
+// Store warehouse address for comparison
+const warehouseAddress = "{{ current_warehouse.address }}".toLowerCase().trim();
+const msmeName = "{{ current_user.name }}";
+
 function showSection(sectionId) {
     // Hide all sections
     const sections = document.querySelectorAll('.form-section');
@@ -459,5 +491,60 @@ function showSection(sectionId) {
     // Show the selected section
     document.getElementById(sectionId).classList.add('active');
 }
+
+// Function to check if pickup address matches warehouse address
+function checkPickupAddress() {
+    const pickupAddressField = document.getElementById('pickup_address');
+    const customerNameField = document.getElementById('customer_name');
+    const orderTypeIndicator = document.getElementById('order-type-indicator');
+    
+    if (pickupAddressField && customerNameField) {
+        const pickupAddress = pickupAddressField.value.toLowerCase().trim();
+        
+        if (pickupAddress === warehouseAddress) {
+            // This is an incoming order - auto-fill customer name
+            if (!customerNameField.value) {
+                customerNameField.value = msmeName;
+            }
+            
+            // Show indicator that this is an incoming order
+            if (orderTypeIndicator) {
+                orderTypeIndicator.textContent = "🔄 Incoming Order (Pickup from your warehouse)";
+                orderTypeIndicator.className = "order-type-indicator incoming";
+            }
+            
+            // Disable supplier fields as they're not needed for incoming orders
+            const supplierNameField = document.getElementById('supplier_name');
+            const supplierPhoneField = document.getElementById('supplier_phone');
+            if (supplierNameField) supplierNameField.disabled = true;
+            if (supplierPhoneField) supplierPhoneField.disabled = true;
+            
+        } else {
+            // This is an outgoing order
+            if (orderTypeIndicator) {
+                orderTypeIndicator.textContent = "📤 Outgoing Order (Pickup from external location)";
+                orderTypeIndicator.className = "order-type-indicator outgoing";
+            }
+            
+            // Re-enable supplier fields
+            const supplierNameField = document.getElementById('supplier_name');
+            const supplierPhoneField = document.getElementById('supplier_phone');
+            if (supplierNameField) supplierNameField.disabled = false;
+            if (supplierPhoneField) supplierPhoneField.disabled = false;
+        }
+    }
+}
+
+// Add event listener to pickup address field
+document.addEventListener('DOMContentLoaded', function() {
+    const pickupAddressField = document.getElementById('pickup_address');
+    if (pickupAddressField) {
+        pickupAddressField.addEventListener('input', checkPickupAddress);
+        pickupAddressField.addEventListener('blur', checkPickupAddress);
+    }
+    
+    // Initial check
+    checkPickupAddress();
+});
 </script>
 {% endblock %}

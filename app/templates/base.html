@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParkNLoad-{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <header>
@@ -28,5 +29,7 @@
     <footer>
         <p>&copy; 2025 ParkNLoad</p>
     </footer>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

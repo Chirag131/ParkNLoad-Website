@@ -2,338 +2,305 @@
 
 {% block title %}MSME Dashboard{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <h2>MSME Dashboard</h2>
-    <p>Welcome, {{ current_user.name }}!</p>
-
-    <!-- Warehouse Selector -->
-    <div class="warehouse-selector">
-        <h3>Active Warehouse</h3>
-        {% if current_warehouse %}
-        <div class="current-warehouse">
-            <div class="warehouse-info">
-                <h4>{{ current_warehouse.name }}</h4>
-                <p>{{ current_warehouse.address }}, {{ current_warehouse.city }}, {{ current_warehouse.state }}</p>
-                <span class="status-badge active">Active</span>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="">
+                </div>
+                <div class="brand-name">ParkNload</div>
             </div>
-            <div class="warehouse-actions">
-                <a href="{{ url_for('msme.warehouses') }}" class="btn btn-outline">Change Warehouse</a>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('msme.dashboard') }}" class="nav-link active" onclick="setActive(this)">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('msme.orders') }}" class="nav-link" onclick="setActive(this)">Orders</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="setActive(this)">Inventory</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="setActive(this)">Analysis</a>
+                </li>
+            </ul>
+            
+            <div class="user-section">
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+                <button class="profile-btn">{{ current_user.name[0] }}</button>
             </div>
         </div>
-        {% else %}
-        <div class="no-warehouse">
-            <p>No warehouse selected. Please add or select a warehouse to continue.</p>
-            <a href="{{ url_for('msme.add_warehouse') }}" class="btn btn-primary">Add Warehouse</a>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <h3>Warehouses</h3>
-            <p class="stat-number">{{ warehouse_count }}</p>
-            <a href="{{ url_for('msme.warehouses') }}" class="btn btn-primary">Manage Warehouses</a>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Recent Orders</h3>
-            <p class="stat-number">{{ recent_orders|length }}</p>
-            <a href="{{ url_for('msme.orders') }}" class="btn btn-primary">View All Orders</a>
-        </div>
-    </div>
-
-    <nav class="dashboard-nav">
-        <a href="{{ url_for('msme.warehouses') }}" class="nav-link">My Warehouses</a>
-        <a href="{{ url_for('msme.orders') }}" class="nav-link">My Orders</a>
-        <a href="{{ url_for('msme.add_order') }}" class="nav-link">Add Order</a>
-        <a href="{{ url_for('msme.add_warehouse') }}" class="nav-link">Add Warehouse</a>
     </nav>
 
-    {% if user_warehouses and not current_warehouse %}
-    <div class="warehouse-selection">
-        <h3>Select a Warehouse</h3>
-        <p>Choose a warehouse to start creating orders:</p>
-        <div class="warehouse-options">
-            {% for warehouse in user_warehouses %}
-            <div class="warehouse-option">
-                <div class="warehouse-details">
-                    <h4>{{ warehouse.name }}</h4>
-                    <p>{{ warehouse.address }}, {{ warehouse.city }}, {{ warehouse.state }}</p>
-                </div>
-                <a href="{{ url_for('msme.set_warehouse', warehouse_id=warehouse.id) }}" class="btn btn-primary">Select</a>
+    <!-- Mobile Navigation -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <div class="logo-section">
+                <div class="logo-icon">P</div>
+                <div class="brand-name">ParkNload</div>
             </div>
-            {% endfor %}
+            <button class="mobile-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <ul class="mobile-nav-menu">
+            <li class="mobile-nav-item">
+                <a href="{{ url_for('msme.dashboard') }}" class="mobile-nav-link active" onclick="setMobileActive(this)">Dashboard</a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="{{ url_for('msme.add_order') }}" class="mobile-nav-link" onclick="setMobileActive(this)">Add Delivery</a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="{{ url_for('msme.warehouses') }}" class="mobile-nav-link" onclick="setMobileActive(this)">Warehouse Management</a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="#" class="mobile-nav-link" onclick="setMobileActive(this)">Inventory</a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="#" class="mobile-nav-link" onclick="setMobileActive(this)">Inventory Forecasting</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container">
+        <!-- Welcome Section with Workspace Dropdown -->
+        <div class="welcome-section">
+            <div class="welcome-title">Welcome {{ current_user.name }}!</div>
+            <div class="workspace-section">
+                <div class="workspace-dropdown">
+                    <div class="workspace-selector" id="workspaceSelector" onclick="toggleWorkspace()">
+                        <span id="selectedWorkspace">
+                            {% if current_warehouse %}
+                                {{ current_warehouse.name }}
+                            {% else %}
+                                Select Workspace
+                            {% endif %}
+                        </span>
+                        <span class="dropdown-arrow" id="dropdownArrow">▼</span>
+                    </div>
+                    {% if user_warehouses %}
+                    <div class="workspace-options" id="workspaceOptions" style="display: none;">
+                        {% for warehouse in user_warehouses %}
+                        <div class="workspace-option" onclick="selectWorkspace('{{ warehouse.id }}', '{{ warehouse.name }}')">
+                            {{ warehouse.name }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-value">{{ incoming_orders }}</div>
+                <div class="stat-label">Incoming Orders</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-value">{{ outgoing_orders }}</div>
+                <div class="stat-label">Outgoing Shipments</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-value">{{ warehouse_count }}</div>
+                <div class="stat-label">Warehouses</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-value">{{ incoming_orders + outgoing_orders }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+
+        <!-- Main Layout with Map and Upcoming Deliveries -->
+        <div class="main-layout">
+            <!-- Map Container -->
+            <div class="map-container">
+                <div class="map-header">
+                    <div class="map-title">Live Tracking Map</div>
+                    <div class="map-controls">
+                        <button class="map-btn" onclick="refreshMap()">Refresh</button>
+                        <button class="map-btn" onclick="openFullMap()">Full View</button>
+                    </div>
+                </div>
+                <div class="map-display" onclick="openFullMap()">
+                    <div class="map-icon">🗺️</div>
+                    <div class="map-text">Click to view interactive map</div>
+                </div>
+            </div>
+
+            <!-- Upcoming Deliveries -->
+            <div class="upcoming-deliveries">
+                <div class="upcoming-title">
+                    Upcoming Deliveries
+                </div>
+                {% if recent_orders %}
+                    {% for order in recent_orders[:5] %}
+                    <div class="upcoming-item">
+                        <div class="delivery-id">DEL-{{ order.id }}</div>
+                        <div class="delivery-time">Expected: {{ order.time_slot }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="upcoming-item">
+                        <div class="delivery-id">No upcoming deliveries</div>
+                        <div class="delivery-time">Create your first order</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Active Deliveries Table -->
+        <div class="active-deliveries">
+            <div class="table-header">
+                <div class="table-title">Active Deliveries</div>
+                <button class="add-delivery-btn" onclick="addNewDelivery()">+ Add New Delivery</button>
+            </div>
+            
+            <div class="table-scroll">
+                <table class="deliveries-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Logistics Company</th>
+                            <th>Route/Type</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th>ETA</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_orders %}
+                            {% for order in recent_orders[:6] %}
+                            <tr>
+                                <td class="delivery-row-id">DEL-{{ order.id }}</td>
+                                <td>
+                                    <div class="company-name">{{ order.logistic_company }}</div>
+                                    <div class="delivery-info">
+                                        {% if order.driver %}
+                                            Driver: {{ order.driver.name }}
+                                        {% else %}
+                                            Driver: Not assigned
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="company-name">
+                                        {% if order.order_type == 'incoming' %}
+                                            🔄 Incoming
+                                        {% else %}
+                                            📤 Outgoing
+                                        {% endif %}
+                                    </div>
+                                    <div class="delivery-info">{{ order.package_type|title }}</div>
+                                </td>
+                                <td>
+                                    <div class="company-name">
+                                        {% if order.supplier_name %}
+                                            {{ order.supplier_name }}
+                                        {% else %}
+                                            {{ current_user.name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="delivery-info">
+                                        {% if order.supplier_phone %}
+                                            Contact: {{ order.supplier_phone }}
+                                        {% else %}
+                                            Contact: N/A
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="status-badge status-pending">
+                                        {% if order.order_type == 'incoming' %}
+                                            Incoming
+                                        {% else %}
+                                            Outgoing
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="company-name">{{ order.time_slot }}</div>
+                                    <div class="delivery-info">{{ order.date.strftime('%d-%m-%Y') }}</div>
+                                </td>
+                                <td>
+                                    <div class="company-name" style="color: 
+                                        {% if order.package_priority == 'high' %}#f59e0b
+                                        {% elif order.package_priority == 'medium' %}#8b5cf6
+                                        {% else %}#14b8a6{% endif %}">
+                                        {{ order.package_priority|title }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 20px;">
+                                    <div class="empty-state">
+                                        <h3>No Orders Yet</h3>
+                                        <p>You haven't created any orders yet. Create your first order to get started.</p>
+                                        <a href="{{ url_for('msme.add_order') }}" class="btn btn-primary">Create Your First Order</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    {% endif %}
 
-    {% if recent_orders %}
-    <div class="recent-orders">
-        <h3>Recent Orders</h3>
-        <div class="orders-list">
-            {% for order in recent_orders %}
-            <div class="order-item">
-                <div class="order-header">
-                    <span class="order-id">#{{ order.id }}</span>
-                    <span class="order-warehouse">{{ order.warehouse.name }}</span>
-                    <span class="order-date">{{ order.created_at.strftime('%Y-%m-%d') }}</span>
-                </div>
-                <div class="order-details">
-                    <p><strong>{{ order.package_name }}</strong> - {{ order.quantity }} {{ order.package_type }}</p>
-                    <p>From: {{ order.pickup_address[:50] }}...</p>
-                    <p>To: {{ order.delivery_address[:50] }}...</p>
-                </div>
-                <a href="{{ url_for('msme.order_detail', order_id=order.id) }}" class="btn btn-sm btn-outline">View Details</a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-</div>
+    <!-- Additional Jinja-specific JavaScript -->
+    <script>
+        // Function to select warehouse
+        function selectWorkspace(warehouseId, warehouseName) {
+            // Update the display
+            document.getElementById('selectedWorkspace').textContent = warehouseName;
+            
+            // Hide the options
+            document.getElementById('workspaceOptions').style.display = 'none';
+            
+            // Update the arrow
+            document.getElementById('dropdownArrow').textContent = '▼';
+            
+            // Redirect to set the warehouse
+            window.location.href = "{{ url_for('msme.set_warehouse', warehouse_id=0) }}".replace('0', warehouseId);
+        }
 
-<style>
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
+        // Function to add new delivery
+        function addNewDelivery() {
+            window.location.href = "{{ url_for('msme.add_order') }}";
+        }
 
-.warehouse-selector {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin-bottom: 30px;
-}
+        // Function to refresh map
+        function refreshMap() {
+            // Add map refresh logic here
+            console.log('Refreshing map...');
+        }
 
-.warehouse-selector h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 10px;
-}
+        // Function to open full map
+        function openFullMap() {
+            // Add full map logic here
+            console.log('Opening full map...');
+        }
 
-.current-warehouse {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        // Function to animate card
+        function animateCard(card) {
+            card.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                card.style.transform = 'scale(1)';
+            }, 200);
+        }
+    </script>
+{% endblock %}
 
-.warehouse-info h4 {
-    margin: 0 0 10px 0;
-    color: #007bff;
-    font-size: 1.2em;
-}
-
-.warehouse-info p {
-    margin: 5px 0;
-    color: #666;
-}
-
-.status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8em;
-    font-weight: 500;
-}
-
-.status-badge.active {
-    background: #d4edda;
-    color: #155724;
-}
-
-.no-warehouse {
-    text-align: center;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 6px;
-}
-
-.no-warehouse p {
-    margin: 0 0 15px 0;
-    color: #666;
-}
-
-.warehouse-selection {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 25px;
-    margin: 30px 0;
-}
-
-.warehouse-selection h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-}
-
-.warehouse-selection p {
-    margin: 0 0 20px 0;
-    color: #666;
-}
-
-.warehouse-options {
-    display: grid;
-    gap: 15px;
-}
-
-.warehouse-option {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-}
-
-.warehouse-option h4 {
-    margin: 0 0 5px 0;
-    color: #333;
-}
-
-.warehouse-option p {
-    margin: 0;
-    color: #666;
-    font-size: 0.9em;
-}
-
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 30px 0;
-}
-
-.stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 2.5em;
-    font-weight: bold;
-    color: #007bff;
-    margin: 10px 0;
-}
-
-.dashboard-nav {
-    display: flex;
-    gap: 15px;
-    margin: 30px 0;
-    flex-wrap: wrap;
-}
-
-.nav-link {
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
-
-.nav-link:hover {
-    background: #0056b3;
-    color: white;
-}
-
-.recent-orders {
-    margin-top: 40px;
-}
-
-.orders-list {
-    display: grid;
-    gap: 15px;
-}
-
-.order-item {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.order-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 0.9em;
-    color: #666;
-}
-
-.order-warehouse {
-    background: #e9ecef;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-}
-
-.order-details p {
-    margin: 5px 0;
-}
-
-.btn {
-    display: inline-block;
-    padding: 8px 16px;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.btn-primary {
-    background: #007bff;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-}
-
-.btn-outline {
-    border: 1px solid #007bff;
-    color: #007bff;
-    background: transparent;
-}
-
-.btn-outline:hover {
-    background: #007bff;
-    color: white;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 0.8em;
-}
-
-@media (max-width: 768px) {
-    .current-warehouse {
-        flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
-    }
-    
-    .warehouse-option {
-        flex-direction: column;
-        gap: 15px;
-        align-items: flex-start;
-    }
-    
-    .dashboard-nav {
-        flex-direction: column;
-    }
-    
-    .nav-link {
-        text-align: center;
-    }
-}
-</style>
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

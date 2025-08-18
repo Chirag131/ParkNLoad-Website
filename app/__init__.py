@@ -42,6 +42,9 @@ def create_db(app):
         
         # Check if we need to migrate existing orders
         migrate_existing_orders(app)
+        
+        # Check if we need to migrate order types
+        migrate_order_types(app)
 
 
 def migrate_existing_orders(app):
@@ -82,3 +85,38 @@ def migrate_existing_orders(app):
             print("Migration completed successfully!")
         else:
             print("No users found. Cannot create default warehouse.")
+
+
+def migrate_order_types(app):
+    """Migrate existing orders to include order type classification"""
+    from .models import Order, Warehouse
+    
+    # Check if there are orders without order_type or with default order_type
+    orders_to_migrate = Order.query.filter(
+        (Order.order_type == "outgoing") | (Order.order_type.is_(None))
+    ).all()
+    
+    if orders_to_migrate:
+        print(f"Found {len(orders_to_migrate)} orders to migrate for order type classification...")
+        
+        migrated_count = 0
+        for order in orders_to_migrate:
+            # Get the warehouse for this order
+            warehouse = Warehouse.query.get(order.warehouse_id)
+            
+            if warehouse:
+                # Check if pickup address matches warehouse address
+                if order.pickup_address.lower().strip() == warehouse.address.lower().strip():
+                    order.order_type = "incoming"
+                    # Auto-fill customer name with MSME details if not already set
+                    if not order.customer_name:
+                        order.customer_name = order.user.name
+                    migrated_count += 1
+        
+        if migrated_count > 0:
+            db.session.commit()
+            print(f"Successfully migrated {migrated_count} orders to 'incoming' type!")
+        else:
+            print("No orders needed migration for order type classification.")
+    else:
+        print("All orders already have proper order type classification.")

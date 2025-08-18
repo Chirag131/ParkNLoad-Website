@@ -17,9 +17,18 @@
         <div class="order-overview">
             <div class="overview-header">
                 <h3>Order Overview</h3>
-                <span class="priority-badge {{ order.package_priority }}">
-                    {{ order.package_priority|title }} Priority
-                </span>
+                <div class="header-badges">
+                    <span class="order-type-badge {{ order.order_type }}">
+                        {% if order.order_type == 'incoming' %}
+                            🔄 Incoming Order
+                        {% else %}
+                            📤 Outgoing Order
+                        {% endif %}
+                    </span>
+                    <span class="priority-badge {{ order.package_priority }}">
+                        {{ order.package_priority|title }} Priority
+                    </span>
+                </div>
             </div>
             <div class="overview-grid">
                 <div class="overview-item">
@@ -41,6 +50,16 @@
                 <div class="overview-item">
                     <label>Time Slot</label>
                     <span>{{ order.time_slot }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Order Type</label>
+                    <span class="order-type-text {{ order.order_type }}">
+                        {% if order.order_type == 'incoming' %}
+                            🔄 Incoming (Pickup from warehouse)
+                        {% else %}
+                            📤 Outgoing (Pickup from external)
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="overview-item">
                     <label>Created</label>
@@ -198,6 +217,39 @@
 .overview-header h3 {
     margin: 0;
     color: #333;
+}
+
+.header-badges {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.order-type-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.order-type-badge.incoming {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.order-type-badge.outgoing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.order-type-text.incoming {
+    color: #0c5460;
+    font-weight: 600;
+}
+
+.order-type-text.outgoing {
+    color: #856404;
+    font-weight: 600;
 }
 
 .overview-grid {

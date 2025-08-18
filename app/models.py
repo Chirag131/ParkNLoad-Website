@@ -71,6 +71,9 @@ class Order(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     package_type = db.Column(db.String(50), nullable=False)
     package_description = db.Column(db.String(300))
+    
+    # Order Classification
+    order_type = db.Column(db.String(20), default="outgoing")  # "incoming" or "outgoing"
 
     # Logistics
     logistic_company = db.Column(db.String(100), nullable=False)

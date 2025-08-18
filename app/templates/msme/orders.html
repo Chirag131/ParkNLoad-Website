@@ -25,10 +25,43 @@
         </div>
     </div>
 
-    {% if selected_warehouse %}
-    <div class="warehouse-filter">
-        <h3>Filtered by: {{ selected_warehouse.name }}</h3>
-        <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">Show All Orders</a>
+    <!-- Order Type Filter -->
+    <div class="order-type-filter-section">
+        <h3>Filter by Order Type</h3>
+        <div class="filter-options">
+            <a href="{{ url_for('msme.orders', warehouse_id=selected_warehouse.id if selected_warehouse else None) }}" 
+               class="filter-option {{ 'active' if not selected_order_type }}">
+                All Orders
+            </a>
+            <a href="{{ url_for('msme.orders', warehouse_id=selected_warehouse.id if selected_warehouse else None, order_type='incoming') }}" 
+               class="filter-option {{ 'active' if selected_order_type == 'incoming' }}">
+                🔄 Incoming Orders
+            </a>
+            <a href="{{ url_for('msme.orders', warehouse_id=selected_warehouse.id if selected_warehouse else None, order_type='outgoing') }}" 
+               class="filter-option {{ 'active' if selected_order_type == 'outgoing' }}">
+                📤 Outgoing Orders
+            </a>
+        </div>
+    </div>
+
+    {% if selected_warehouse or selected_order_type %}
+    <div class="active-filters">
+        <h3>Active Filters:</h3>
+        <div class="filter-tags">
+            {% if selected_warehouse %}
+            <span class="filter-tag warehouse">
+                Warehouse: {{ selected_warehouse.name }}
+                <a href="{{ url_for('msme.orders', order_type=selected_order_type) }}" class="remove-filter">×</a>
+            </span>
+            {% endif %}
+            {% if selected_order_type %}
+            <span class="filter-tag order-type">
+                Order Type: {{ 'Incoming' if selected_order_type == 'incoming' else 'Outgoing' }}
+                <a href="{{ url_for('msme.orders', warehouse_id=selected_warehouse.id if selected_warehouse else None) }}" class="remove-filter">×</a>
+            </span>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">Clear All Filters</a>
     </div>
     {% endif %}
 
@@ -41,6 +74,13 @@
                     <div class="order-id">
                         <h3>Order #{{ order.id }}</h3>
                         <span class="warehouse-badge">{{ order.warehouse.name }}</span>
+                        <span class="order-type-badge {{ order.order_type }}">
+                            {% if order.order_type == 'incoming' %}
+                                🔄 Incoming
+                            {% else %}
+                                📤 Outgoing
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="order-status">
                         <span class="priority-badge {{ order.package_priority }}">
@@ -126,12 +166,16 @@
     margin-bottom: 30px;
 }
 
-.warehouse-filter-section {
+.warehouse-filter-section, .order-type-filter-section {
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 20px;
     margin-bottom: 30px;
+}
+
+.order-type-filter-section {
+    margin-bottom: 20px;
 }
 
 .warehouse-filter-section h3 {
@@ -166,19 +210,58 @@
     border-color: #007bff;
 }
 
-.warehouse-filter {
+.active-filters {
     background: #e3f2fd;
     padding: 15px 20px;
     border-radius: 8px;
     margin-bottom: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
-.warehouse-filter h3 {
-    margin: 0;
+.active-filters h3 {
+    margin: 0 0 15px 0;
     color: #1976d2;
+    font-size: 1em;
+}
+
+.filter-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.filter-tag {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    color: #1976d2;
+    border: 1px solid #1976d2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-tag.warehouse {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.filter-tag.order-type {
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.remove-filter {
+    color: inherit;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+.remove-filter:hover {
+    opacity: 0.7;
 }
 
 .orders-grid {
@@ -221,6 +304,25 @@
     border-radius: 20px;
     font-size: 0.8em;
     font-weight: 500;
+    margin-right: 8px;
+}
+
+.order-type-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.order-type-badge.incoming {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.order-type-badge.outgoing {
+    background: #fff3cd;
+    color: #856404;
 }
 
 .order-status {

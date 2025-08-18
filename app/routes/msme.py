@@ -13,12 +13,18 @@ def dashboard():
     warehouse_count = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).count()
     recent_orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
     
+    # Get order type statistics
+    incoming_orders = Order.query.filter_by(user_id=current_user.id, order_type="incoming").count()
+    outgoing_orders = Order.query.filter_by(user_id=current_user.id, order_type="outgoing").count()
+    
     # Get user's warehouses for selection
     user_warehouses = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).all()
     
     return render_template('msme/dashboard.html', 
                          warehouse_count=warehouse_count, 
                          recent_orders=recent_orders,
+                         incoming_orders=incoming_orders,
+                         outgoing_orders=outgoing_orders,
                          user_warehouses=user_warehouses,
                          current_warehouse=current_user.current_warehouse)
 
@@ -141,16 +147,28 @@ def delete_warehouse(warehouse_id):
 @login_required
 def orders():
     warehouse_id = request.args.get('warehouse_id', type=int)
+    order_type = request.args.get('order_type', type=str)
+    
+    # Build query
+    query = Order.query.filter_by(user_id=current_user.id)
     
     if warehouse_id:
         # Filter orders by specific warehouse
         warehouse = Warehouse.query.filter_by(id=warehouse_id, user_id=current_user.id).first_or_404()
-        orders = Order.query.filter_by(user_id=current_user.id, warehouse_id=warehouse_id).order_by(Order.created_at.desc()).all()
-        return render_template('msme/orders.html', orders=orders, selected_warehouse=warehouse)
+        query = query.filter_by(warehouse_id=warehouse_id)
     else:
-        # Show all orders
-        orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
-        return render_template('msme/orders.html', orders=orders, selected_warehouse=None)
+        warehouse = None
+    
+    if order_type and order_type in ['incoming', 'outgoing']:
+        # Filter orders by type
+        query = query.filter_by(order_type=order_type)
+    
+    orders = query.order_by(Order.created_at.desc()).all()
+    
+    return render_template('msme/orders.html', 
+                         orders=orders, 
+                         selected_warehouse=warehouse,
+                         selected_order_type=order_type)
 
 
 # Add a new order
@@ -187,7 +205,18 @@ def add_order():
         db.session.add(driver)
         db.session.commit()  
 
-        # 2. Save Order with current warehouse
+        # 2. Determine order type and auto-fill customer name if needed
+        order_type = "outgoing"  # default
+        customer_name = form.customer_name.data
+        
+        # Check if pickup address matches warehouse address (incoming order)
+        if form.pickup_address.data.lower().strip() == current_warehouse.address.lower().strip():
+            order_type = "incoming"
+            # Auto-fill customer name with MSME details if not provided
+            if not customer_name:
+                customer_name = current_user.name
+        
+        # 3. Save Order with current warehouse
         order = Order(
             user_id=current_user.id,
             warehouse_id=current_user.current_warehouse_id,
@@ -195,7 +224,7 @@ def add_order():
             delivery_address=form.delivery_address.data,
             supplier_name=form.supplier_name.data,
             supplier_phone=form.supplier_phone.data,
-            customer_name=form.customer_name.data,
+            customer_name=customer_name,
             customer_phone=form.customer_phone.data,
             package_name=form.package_name.data,
             package_priority=form.package_priority.data,
@@ -205,7 +234,8 @@ def add_order():
             logistic_company=form.logistic_company.data,
             driver_id=driver.id,
             date=form.date.data,
-            time_slot=form.time_slot.data
+            time_slot=form.time_slot.data,
+            order_type=order_type
         )
         db.session.add(order)
         db.session.commit()
