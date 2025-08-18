@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}My Warehouses{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h2>My Warehouses</h2>
+        <a href="{{ url_for('msme.add_warehouse') }}" class="btn btn-primary">Add New Warehouse</a>
+    </div>
+
+    {% if warehouses %}
+    <div class="warehouses-grid">
+        {% for warehouse in warehouses %}
+        <div class="warehouse-card">
+            <div class="warehouse-header">
+                <h3>{{ warehouse.name }}</h3>
+                <span class="status-badge {{ 'active' if warehouse.is_active else 'inactive' }}">
+                    {{ 'Active' if warehouse.is_active else 'Inactive' }}
+                </span>
+            </div>
+            
+            <div class="warehouse-details">
+                <p><strong>Address:</strong> {{ warehouse.address }}</p>
+                <p><strong>City:</strong> {{ warehouse.city }}, {{ warehouse.state }}</p>
+                <p><strong>Pincode:</strong> {{ warehouse.pincode }}</p>
+                {% if warehouse.contact_person %}
+                <p><strong>Contact:</strong> {{ warehouse.contact_person }}</p>
+                {% endif %}
+                {% if warehouse.contact_phone %}
+                <p><strong>Phone:</strong> {{ warehouse.contact_phone }}</p>
+                {% endif %}
+                <p><strong>Created:</strong> {{ warehouse.created_at.strftime('%Y-%m-%d') }}</p>
+            </div>
+            
+            <div class="warehouse-actions">
+                <a href="{{ url_for('msme.orders', warehouse_id=warehouse.id) }}" class="btn btn-outline">
+                    View Orders ({{ warehouse.orders|length }})
+                </a>
+                <a href="{{ url_for('msme.edit_warehouse', warehouse_id=warehouse.id) }}" class="btn btn-outline">Edit</a>
+                {% if warehouse.orders|length == 0 %}
+                <form method="POST" action="{{ url_for('msme.delete_warehouse', warehouse_id=warehouse.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this warehouse?')">
+                        Delete
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No Warehouses Yet</h3>
+        <p>You haven't added any warehouses yet. Add your first warehouse to start managing orders.</p>
+        <a href="{{ url_for('msme.add_warehouse') }}" class="btn btn-primary">Add Your First Warehouse</a>
+    </div>
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{{ url_for('msme.dashboard') }}">← Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.warehouses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.warehouse-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    transition: transform 0.2s;
+}
+
+.warehouse-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.warehouse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.warehouse-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.warehouse-details p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.warehouse-details strong {
+    color: #333;
+}
+
+.warehouse-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-outline {
+    border: 1px solid #007bff;
+    color: #007bff;
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: #007bff;
+    color: white;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 40px 0;
+}
+
+.empty-state h3 {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.empty-state p {
+    color: #888;
+    margin-bottom: 25px;
+}
+
+.back-link {
+    margin-top: 30px;
+}
+
+.back-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

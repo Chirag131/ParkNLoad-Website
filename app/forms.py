@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, TextAreaField,DateField,TimeField,SelectField
+from wtforms import StringField, SubmitField, IntegerField, TextAreaField,DateField,TimeField,SelectField, BooleanField
 from wtforms.validators import DataRequired, Email,Length,Optional
 
 
@@ -8,8 +8,21 @@ class BaseProfileForm(FlaskForm):
     phone = StringField('Phone Number', validators=[DataRequired()])
     email = StringField('Email',render_kw={'readonly': True} )
 
-
     submit = SubmitField('Save')
+
+
+class WarehouseForm(FlaskForm):
+    name = StringField('Warehouse Name', validators=[DataRequired(), Length(max=100)])
+    address = TextAreaField('Address', validators=[DataRequired(), Length(max=200)])
+    city = StringField('City', validators=[DataRequired(), Length(max=100)])
+    state = StringField('State', validators=[DataRequired(), Length(max=100)])
+    pincode = StringField('Pincode', validators=[DataRequired(), Length(max=10)])
+    contact_person = StringField('Contact Person', validators=[Optional(), Length(max=100)])
+    contact_phone = StringField('Contact Phone', validators=[Optional(), Length(max=15)])
+    is_active = BooleanField('Active')
+    
+    submit = SubmitField('Save Warehouse')
+
 
 class OrderForm(FlaskForm):
     # ------------------------
@@ -52,7 +65,18 @@ class OrderForm(FlaskForm):
     # 4. Schedule
     # ------------------------
     date = DateField("Date", validators=[DataRequired()])
-    time_slot = TimeField("Time Slot", validators=[DataRequired()])
+    time_slot = SelectField(
+        "Time Slot",
+        choices=[
+            ("06:00-09:00", "6:00 AM - 9:00 AM"),
+            ("09:00-12:00", "9:00 AM - 12:00 PM"),
+            ("12:00-15:00", "12:00 PM - 3:00 PM"),
+            ("15:00-18:00", "3:00 PM - 6:00 PM"),
+            ("18:00-21:00", "6:00 PM - 9:00 PM"),
+            ("21:00-00:00", "9:00 PM - 12:00 AM")
+        ],
+        validators=[DataRequired()]
+    )
     
     # ------------------------
     # Submit

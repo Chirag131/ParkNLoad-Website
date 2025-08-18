@@ -1,20 +1,449 @@
-<h2>Order #{{ order.id }}</h2>
-<p>Status: {{ order.status if order.status else "Pending" }}</p>
-<p>Package Name: {{ order.package_name }}</p>
-<p>Package Description: {{ order.package_description if order.package_description else "No description" }}</p>
-<p>Pickup Address: {{ order.pickup_address }}</p>
-<p>Delivery Address: {{ order.delivery_address }}</p>
-<p>Quantity: {{ order.quantity }}</p>
-<p>Package Type: {{ order.package_type }}</p>
-<p>Package Priority: {{ order.package_priority }}</p>
-<p>Logistic Company: {{ order.logistic_company }}</p>
+{% extends "base.html" %}
 
-<p>Driver: {{ order.driver.name if order.driver else "Not assigned yet" }}</p>
-{% if order.driver %}
-  <p>Driver Phone: {{ order.driver.phone }}</p>
-  <p>Truck No: {{ order.driver.truck_no if order.driver.truck_no else "N/A" }}</p>
-  {% if order.status == "In Transit" %}
-    <p>Current Location: {{ order.driver.current_lat if order.driver.current_lat else "N/A" }}, {{ order.driver.current_lng if order.driver.current_lng else "N/A" }}</p>
-    <!-- Embed Google Maps iframe here if you have lat/lng -->
-  {% endif %}
-{% endif %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h2>Order #{{ order.id }}</h2>
+        <div class="header-actions">
+            <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">← Back to Orders</a>
+            <a href="{{ url_for('msme.orders', warehouse_id=order.warehouse.id) }}" class="btn btn-outline">View Warehouse Orders</a>
+        </div>
+    </div>
+
+    <div class="order-detail-container">
+        <!-- Order Overview -->
+        <div class="order-overview">
+            <div class="overview-header">
+                <h3>Order Overview</h3>
+                <span class="priority-badge {{ order.package_priority }}">
+                    {{ order.package_priority|title }} Priority
+                </span>
+            </div>
+            <div class="overview-grid">
+                <div class="overview-item">
+                    <label>Package Name</label>
+                    <span>{{ order.package_name }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Package Type</label>
+                    <span>{{ order.package_type|title }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Quantity</label>
+                    <span>{{ order.quantity }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Date</label>
+                    <span>{{ order.date.strftime('%d-%m-%Y') }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Time Slot</label>
+                    <span>{{ order.time_slot }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Created</label>
+                    <span>{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouse Information -->
+        <div class="detail-section">
+            <h3>Warehouse Information</h3>
+            <div class="warehouse-info">
+                <div class="warehouse-details">
+                    <h4>{{ order.warehouse.name }}</h4>
+                    <p><strong>Address:</strong> {{ order.warehouse.address }}</p>
+                    <p><strong>City:</strong> {{ order.warehouse.city }}, {{ order.warehouse.state }}</p>
+                    <p><strong>Pincode:</strong> {{ order.warehouse.pincode }}</p>
+                    {% if order.warehouse.contact_person %}
+                    <p><strong>Contact:</strong> {{ order.warehouse.contact_person }}</p>
+                    {% endif %}
+                    {% if order.warehouse.contact_phone %}
+                    <p><strong>Phone:</strong> {{ order.warehouse.contact_phone }}</p>
+                    {% endif %}
+                </div>
+                <div class="warehouse-status">
+                    <span class="status-badge {{ 'active' if order.warehouse.is_active else 'inactive' }}">
+                        {{ 'Active' if order.warehouse.is_active else 'Inactive' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Details -->
+        <div class="detail-section">
+            <h3>Package Details</h3>
+            <div class="package-details">
+                {% if order.package_description %}
+                <div class="detail-item">
+                    <label>Description</label>
+                    <span>{{ order.package_description }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-item">
+                    <label>Priority</label>
+                    <span class="priority-badge {{ order.package_priority }}">
+                        {{ order.package_priority|title }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="detail-section">
+            <h3>Location Information</h3>
+            <div class="location-grid">
+                <div class="location-card pickup">
+                    <h4>Pickup Location</h4>
+                    <p class="address">{{ order.pickup_address }}</p>
+                    {% if order.supplier_name %}
+                    <div class="contact-info">
+                        <p><strong>Supplier:</strong> {{ order.supplier_name }}</p>
+                        {% if order.supplier_phone %}
+                        <p><strong>Phone:</strong> {{ order.supplier_phone }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="location-card delivery">
+                    <h4>Delivery Location</h4>
+                    <p class="address">{{ order.delivery_address }}</p>
+                    {% if order.customer_name %}
+                    <div class="contact-info">
+                        <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                        {% if order.customer_phone %}
+                        <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Logistics Information -->
+        <div class="detail-section">
+            <h3>Logistics Information</h3>
+            <div class="logistics-info">
+                <div class="detail-item">
+                    <label>Logistics Company</label>
+                    <span>{{ order.logistic_company }}</span>
+                </div>
+                
+                {% if order.driver %}
+                <div class="driver-info">
+                    <h4>Driver Details</h4>
+                    <div class="driver-details">
+                        <p><strong>Name:</strong> {{ order.driver.name }}</p>
+                        <p><strong>Phone:</strong> {{ order.driver.phone }}</p>
+                        {% if order.driver.truck_no %}
+                        <p><strong>Truck No:</strong> {{ order.driver.truck_no }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="detail-item">
+                    <label>Driver</label>
+                    <span class="not-assigned">Not assigned yet</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.order-detail-container {
+    display: grid;
+    gap: 25px;
+}
+
+.order-overview, .detail-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 25px;
+}
+
+.overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.overview-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.overview-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.overview-item label {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overview-item span {
+    font-size: 1.1em;
+    color: #333;
+    font-weight: 500;
+}
+
+.detail-section h3 {
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.warehouse-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.warehouse-details h4 {
+    margin: 0 0 15px 0;
+    color: #007bff;
+    font-size: 1.2em;
+}
+
+.warehouse-details p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.warehouse-details strong {
+    color: #333;
+}
+
+.warehouse-status {
+    margin-left: 20px;
+}
+
+.status-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.package-details, .logistics-info {
+    display: grid;
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.detail-item label {
+    font-weight: 500;
+    color: #333;
+}
+
+.detail-item span {
+    color: #666;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.location-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.location-card.pickup {
+    border-left-color: #28a745;
+}
+
+.location-card.delivery {
+    border-left-color: #ffc107;
+}
+
+.location-card h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.address {
+    font-size: 1.1em;
+    color: #495057;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.contact-info p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.contact-info strong {
+    color: #333;
+}
+
+.driver-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+.driver-info h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.driver-details p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.driver-details strong {
+    color: #333;
+}
+
+.not-assigned {
+    color: #dc3545;
+    font-style: italic;
+}
+
+.priority-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.priority-badge.high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-outline {
+    border: 1px solid #007bff;
+    color: #007bff;
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: #007bff;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .warehouse-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .warehouse-status {
+        margin-left: 0;
+    }
+}
+</style>
+{% endblock %}

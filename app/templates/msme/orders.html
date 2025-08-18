@@ -1,19 +1,404 @@
-<h1>My Orders</h1>
-<nav>
-  <a href="{{ url_for('msme.dashboard') }}">Dashboard</a> |
-  <a href="{{ url_for('msme.add_order') }}">Add New Order</a>
-</nav>
+{% extends "base.html" %}
 
-<ul>
-  {% for order in orders %}
-    <li>
-      <a href="{{ url_for('msme.order_detail', order_id=order.id) }}">
-        Order #{{ order.id }} - {{ order.package_name }} 
-        ({{ order.package_description if order.package_description else 'No description' }}) 
-        on {{ order.date.strftime('%d-%m-%Y') }}
-      </a>
-    </li>
-  {% else %}
-    <li>No orders found.</li>
-  {% endfor %}
-</ul>
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h2>My Orders</h2>
+        <a href="{{ url_for('msme.add_order') }}" class="btn btn-primary">Add New Order</a>
+    </div>
+
+    <!-- Warehouse Filter -->
+    <div class="warehouse-filter-section">
+        <h3>Filter by Warehouse</h3>
+        <div class="filter-options">
+            <a href="{{ url_for('msme.orders') }}" class="filter-option {{ 'active' if not selected_warehouse }}">
+                All Warehouses
+            </a>
+            {% for warehouse in current_user.warehouses %}
+            <a href="{{ url_for('msme.orders', warehouse_id=warehouse.id) }}" 
+               class="filter-option {{ 'active' if selected_warehouse and selected_warehouse.id == warehouse.id }}">
+                {{ warehouse.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if selected_warehouse %}
+    <div class="warehouse-filter">
+        <h3>Filtered by: {{ selected_warehouse.name }}</h3>
+        <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">Show All Orders</a>
+    </div>
+    {% endif %}
+
+    <div class="orders-container">
+        {% if orders %}
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <div class="order-id">
+                        <h3>Order #{{ order.id }}</h3>
+                        <span class="warehouse-badge">{{ order.warehouse.name }}</span>
+                    </div>
+                    <div class="order-status">
+                        <span class="priority-badge {{ order.package_priority }}">
+                            {{ order.package_priority|title }}
+                        </span>
+                        <span class="date-badge">{{ order.date.strftime('%d-%m-%Y') }}</span>
+                    </div>
+                </div>
+                
+                <div class="order-details">
+                    <div class="package-info">
+                        <h4>{{ order.package_name }}</h4>
+                        <p><strong>Type:</strong> {{ order.package_type|title }}</p>
+                        <p><strong>Quantity:</strong> {{ order.quantity }}</p>
+                        {% if order.package_description %}
+                        <p><strong>Description:</strong> {{ order.package_description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="location-info">
+                        <div class="pickup">
+                            <h5>Pickup</h5>
+                            <p>{{ order.pickup_address }}</p>
+                            {% if order.supplier_name %}
+                            <p><strong>Supplier:</strong> {{ order.supplier_name }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="delivery">
+                            <h5>Delivery</h5>
+                            <p>{{ order.delivery_address }}</p>
+                            {% if order.customer_name %}
+                            <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="logistics-info">
+                        <p><strong>Logistics:</strong> {{ order.logistic_company }}</p>
+                        {% if order.driver %}
+                        <p><strong>Driver:</strong> {{ order.driver.name }} ({{ order.driver.phone }})</p>
+                        {% endif %}
+                        <p><strong>Time:</strong> {{ order.time_slot }}</p>
+                    </div>
+                </div>
+                
+                <div class="order-actions">
+                    <a href="{{ url_for('msme.order_detail', order_id=order.id) }}" class="btn btn-outline">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            {% if selected_warehouse %}
+            <h3>No Orders in {{ selected_warehouse.name }}</h3>
+            <p>There are no orders associated with this warehouse yet.</p>
+            {% else %}
+            <h3>No Orders Yet</h3>
+            <p>You haven't created any orders yet. Create your first order to get started.</p>
+            {% endif %}
+            <a href="{{ url_for('msme.add_order') }}" class="btn btn-primary">Create Your First Order</a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="back-link">
+        <a href="{{ url_for('msme.dashboard') }}">← Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.warehouse-filter-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.warehouse-filter-section h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.filter-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-option {
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #666;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+}
+
+.filter-option:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.filter-option.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.warehouse-filter {
+    background: #e3f2fd;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.warehouse-filter h3 {
+    margin: 0;
+    color: #1976d2;
+}
+
+.orders-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.order-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    transition: transform 0.2s;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-id h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.warehouse-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.order-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.priority-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.priority-badge.high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.low {
+    background: #d4edda;
+    color: #155724;
+}
+
+.date-badge {
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+}
+
+.order-details {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.package-info h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.package-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.location-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.pickup, .delivery {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.pickup h5, .delivery h5 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pickup p, .delivery p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.logistics-info p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.order-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 40px 0;
+}
+
+.empty-state h3 {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.empty-state p {
+    color: #888;
+    margin-bottom: 25px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-outline {
+    border: 1px solid #007bff;
+    color: #007bff;
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: #007bff;
+    color: white;
+}
+
+.back-link {
+    margin-top: 30px;
+}
+
+.back-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .location-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .order-status {
+        align-items: flex-start;
+    }
+    
+    .filter-options {
+        flex-direction: column;
+    }
+    
+    .filter-option {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
