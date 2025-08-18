@@ -49,7 +49,7 @@ def create_db(app):
 
 def migrate_existing_orders(app):
     """Migrate existing orders to include warehouse information"""
-    from .models import Order, User
+    from .models import Order, User,Warehouse
     
     # Check if there are orders without warehouse_id
     orders_without_warehouse = Order.query.filter_by(warehouse_id=None).all()

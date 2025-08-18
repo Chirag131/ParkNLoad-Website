@@ -106,6 +106,9 @@ body {
     display: flex;
     gap: 15px;
 }
+.credentials a {
+    text-decoration: none;
+}
 
 .main-button {
     padding: 12px 24px;
@@ -685,6 +688,3 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Remove animations */
-/* @keyframes fadeInUp { display: none; }
-.fade-in { animation: none; } */

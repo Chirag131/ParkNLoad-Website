@@ -1,0 +1,35 @@
+/* FOOTER */
+.footer {
+  background: #1e293b;
+  padding: 40px 20px;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  color: #ffffff;
+}
+
+.footer-links {
+  margin-bottom: 20px;
+}
+
+.footer-links a {
+  margin: 0 15px;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #00ffcc; /* subtle hover color */
+}
+
+.footer-contact {
+  margin-bottom: 15px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.footer-copy {
+  font-size: 12px;
+  color: #777;
+}
