@@ -231,10 +231,11 @@
                                     <div class="delivery-info">{{ order.date.strftime('%d-%m-%Y') }}</div>
                                 </td>
                                 <td>
-                                    <div class="company-name" style="color: 
-                                        {% if order.package_priority == 'high' %}#f59e0b
-                                        {% elif order.package_priority == 'medium' %}#8b5cf6
-                                        {% else %}#14b8a6{% endif %}">
+                                    <div class="company-name 
+                                        {% if order.package_priority == 'high' %} #f59e0b
+                                        {% elif order.package_priority == 'medium' %} #8b5cf6
+                                        {% else %} #14b8a6
+                                        {% endif %}">
                                         {{ order.package_priority|title }}
                                     </div>
                                 </td>
