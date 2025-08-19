@@ -21,7 +21,7 @@
 
     <!-- Order Type Indicator -->
     <div id="order-type-indicator" class="order-type-indicator outgoing">
-        📤 Outgoing Order (Pickup from external location)
+        📤 Outgoing Order (Pickup from your warehouse)
     </div>
 
     <div class="form-container">
@@ -502,35 +502,35 @@ function checkPickupAddress() {
         const pickupAddress = pickupAddressField.value.toLowerCase().trim();
         
         if (pickupAddress === warehouseAddress) {
-            // This is an incoming order - auto-fill customer name
-            if (!customerNameField.value) {
-                customerNameField.value = msmeName;
-            }
-            
-            // Show indicator that this is an incoming order
+            // Outgoing order: pickup from your warehouse
             if (orderTypeIndicator) {
-                orderTypeIndicator.textContent = "🔄 Incoming Order (Pickup from your warehouse)";
-                orderTypeIndicator.className = "order-type-indicator incoming";
+                orderTypeIndicator.textContent = "📤 Outgoing Order (Pickup from your warehouse)";
+                orderTypeIndicator.className = "order-type-indicator outgoing";
             }
-            
-            // Disable supplier fields as they're not needed for incoming orders
+
+            // Supplier fields not needed for outgoing
             const supplierNameField = document.getElementById('supplier_name');
             const supplierPhoneField = document.getElementById('supplier_phone');
             if (supplierNameField) supplierNameField.disabled = true;
             if (supplierPhoneField) supplierPhoneField.disabled = true;
-            
+
         } else {
-            // This is an outgoing order
+            // Incoming order: pickup from external location (supplier)
             if (orderTypeIndicator) {
-                orderTypeIndicator.textContent = "📤 Outgoing Order (Pickup from external location)";
-                orderTypeIndicator.className = "order-type-indicator outgoing";
+                orderTypeIndicator.textContent = "🔄 Incoming Order (Pickup from external location)";
+                orderTypeIndicator.className = "order-type-indicator incoming";
             }
-            
-            // Re-enable supplier fields
+
+            // Enable supplier fields
             const supplierNameField = document.getElementById('supplier_name');
             const supplierPhoneField = document.getElementById('supplier_phone');
             if (supplierNameField) supplierNameField.disabled = false;
             if (supplierPhoneField) supplierPhoneField.disabled = false;
+
+            // Auto-fill customer name with MSME for incoming if blank
+            if (!customerNameField.value) {
+                customerNameField.value = msmeName;
+            }
         }
     }
 }

@@ -210,8 +210,10 @@ def add_order():
         order_type = "outgoing"  # default
         customer_name = form.customer_name.data
         
-        # Check if pickup address matches warehouse address (incoming order)
+        # If pickup address matches the warehouse address, it's an OUTGOING order; otherwise INCOMING
         if form.pickup_address.data.lower().strip() == current_warehouse.address.lower().strip():
+            order_type = "outgoing"
+        else:
             order_type = "incoming"
             # Auto-fill customer name with MSME details if not provided
             if not customer_name:
