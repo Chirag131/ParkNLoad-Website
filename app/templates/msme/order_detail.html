@@ -1,18 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}Order #{{ order.id }}{% endblock %}
+{% block title %}Order Detail{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <h2>Order #{{ order.id }}</h2>
-        <div class="header-actions">
-            <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">← Back to Orders</a>
-            <a href="{{ url_for('msme.orders', warehouse_id=order.warehouse.id) }}" class="btn btn-outline">View Warehouse Orders</a>
+        <div class="header-content">
+            <h2>Order #{{ order.id }}</h2>
+            <div class="header-actions">
+                <a href="{{ url_for('msme.orders') }}" class="btn btn-outline">← Back to Orders</a>
+                <a href="{{ url_for('msme.add_order') }}" class="btn btn-primary">Add New Order</a>
+            </div>
         </div>
     </div>
 
     <div class="order-detail-container">
+        <!-- Map Container -->
+        <div class="map-container">
+            <div class="map-header">
+                <div class="map-title">Route Visualization</div>
+                <div class="map-controls">
+                    <button class="map-btn" onclick="refreshMap()">Refresh</button>
+                    <button class="map-btn" onclick="openFullMap()">Full View</button>
+                </div>
+            </div>
+            <div class="map-display" onclick="openFullMap()">
+                <div class="map-icon">🗺️</div>
+                <div class="map-text">Click to view interactive map</div>
+            </div>
+        </div>
+
         <!-- Order Overview -->
         <div class="order-overview">
             <div class="overview-header">
@@ -20,31 +37,24 @@
                 <div class="header-badges">
                     <span class="order-type-badge {{ order.order_type }}">
                         {% if order.order_type == 'incoming' %}
-                            🔄 Incoming Order
+                            🔄 Incoming
                         {% else %}
-                            📤 Outgoing Order
+                            📤 Outgoing
                         {% endif %}
                     </span>
                     <span class="priority-badge {{ order.package_priority }}">
-                        {{ order.package_priority|title }} Priority
+                        {{ order.package_priority|title }}
                     </span>
                 </div>
             </div>
+            
             <div class="overview-grid">
                 <div class="overview-item">
-                    <label>Package Name</label>
-                    <span>{{ order.package_name }}</span>
+                    <label>Order ID</label>
+                    <span>#{{ order.id }}</span>
                 </div>
                 <div class="overview-item">
-                    <label>Package Type</label>
-                    <span>{{ order.package_type|title }}</span>
-                </div>
-                <div class="overview-item">
-                    <label>Quantity</label>
-                    <span>{{ order.quantity }}</span>
-                </div>
-                <div class="overview-item">
-                    <label>Date</label>
+                    <label>Order Date</label>
                     <span>{{ order.date.strftime('%d-%m-%Y') }}</span>
                 </div>
                 <div class="overview-item">
@@ -55,15 +65,19 @@
                     <label>Order Type</label>
                     <span class="order-type-text {{ order.order_type }}">
                         {% if order.order_type == 'incoming' %}
-                            🔄 Incoming (Pickup from warehouse)
+                            Incoming Order
                         {% else %}
-                            📤 Outgoing (Pickup from external)
+                            Outgoing Order
                         {% endif %}
                     </span>
                 </div>
                 <div class="overview-item">
-                    <label>Created</label>
-                    <span>{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</span>
+                    <label>Package Name</label>
+                    <span>{{ order.package_name }}</span>
+                </div>
+                <div class="overview-item">
+                    <label>Quantity</label>
+                    <span>{{ order.quantity }}</span>
                 </div>
             </div>
         </div>
@@ -75,19 +89,12 @@
                 <div class="warehouse-details">
                     <h4>{{ order.warehouse.name }}</h4>
                     <p><strong>Address:</strong> {{ order.warehouse.address }}</p>
-                    <p><strong>City:</strong> {{ order.warehouse.city }}, {{ order.warehouse.state }}</p>
-                    <p><strong>Pincode:</strong> {{ order.warehouse.pincode }}</p>
-                    {% if order.warehouse.contact_person %}
                     <p><strong>Contact:</strong> {{ order.warehouse.contact_person }}</p>
-                    {% endif %}
-                    {% if order.warehouse.contact_phone %}
-                    <p><strong>Phone:</strong> {{ order.warehouse.contact_phone }}</p>
-                    {% endif %}
+                    <p><strong>Phone:</strong> {{ order.warehouse.phone }}</p>
+                    <p><strong>Email:</strong> {{ order.warehouse.email }}</p>
                 </div>
                 <div class="warehouse-status">
-                    <span class="status-badge {{ 'active' if order.warehouse.is_active else 'inactive' }}">
-                        {{ 'Active' if order.warehouse.is_active else 'Inactive' }}
-                    </span>
+                    <span class="status-badge active">Active</span>
                 </div>
             </div>
         </div>
@@ -96,18 +103,24 @@
         <div class="detail-section">
             <h3>Package Details</h3>
             <div class="package-details">
+                <div class="detail-item">
+                    <label>Package Name:</label>
+                    <span>{{ order.package_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Package Type:</label>
+                    <span>{{ order.package_type|title }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Quantity:</label>
+                    <span>{{ order.quantity }}</span>
+                </div>
                 {% if order.package_description %}
                 <div class="detail-item">
-                    <label>Description</label>
+                    <label>Description:</label>
                     <span>{{ order.package_description }}</span>
                 </div>
                 {% endif %}
-                <div class="detail-item">
-                    <label>Priority</label>
-                    <span class="priority-badge {{ order.package_priority }}">
-                        {{ order.package_priority|title }}
-                    </span>
-                </div>
             </div>
         </div>
 
@@ -117,7 +130,7 @@
             <div class="location-grid">
                 <div class="location-card pickup">
                     <h4>Pickup Location</h4>
-                    <p class="address">{{ order.pickup_address }}</p>
+                    <div class="address">{{ order.pickup_address }}</div>
                     {% if order.supplier_name %}
                     <div class="contact-info">
                         <p><strong>Supplier:</strong> {{ order.supplier_name }}</p>
@@ -130,7 +143,7 @@
                 
                 <div class="location-card delivery">
                     <h4>Delivery Location</h4>
-                    <p class="address">{{ order.delivery_address }}</p>
+                    <div class="address">{{ order.delivery_address }}</div>
                     {% if order.customer_name %}
                     <div class="contact-info">
                         <p><strong>Customer:</strong> {{ order.customer_name }}</p>
@@ -148,28 +161,30 @@
             <h3>Logistics Information</h3>
             <div class="logistics-info">
                 <div class="detail-item">
-                    <label>Logistics Company</label>
+                    <label>Logistics Company:</label>
                     <span>{{ order.logistic_company }}</span>
                 </div>
-                
-                {% if order.driver %}
-                <div class="driver-info">
-                    <h4>Driver Details</h4>
-                    <div class="driver-details">
-                        <p><strong>Name:</strong> {{ order.driver.name }}</p>
-                        <p><strong>Phone:</strong> {{ order.driver.phone }}</p>
-                        {% if order.driver.truck_no %}
-                        <p><strong>Truck No:</strong> {{ order.driver.truck_no }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% else %}
                 <div class="detail-item">
-                    <label>Driver</label>
-                    <span class="not-assigned">Not assigned yet</span>
+                    <label>Time Slot:</label>
+                    <span>{{ order.time_slot }}</span>
                 </div>
-                {% endif %}
             </div>
+            
+            {% if order.driver %}
+            <div class="driver-info">
+                <h4>Assigned Driver</h4>
+                <div class="driver-details">
+                    <p><strong>Name:</strong> {{ order.driver.name }}</p>
+                    <p><strong>Phone:</strong> {{ order.driver.phone }}</p>
+                    <p><strong>Email:</strong> {{ order.driver.email }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="driver-info">
+                <h4>Driver Assignment</h4>
+                <p class="not-assigned">No driver has been assigned to this order yet.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -186,6 +201,13 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .header-actions {
@@ -463,7 +485,94 @@
     color: white;
 }
 
-@media (max-width: 768px) {
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+ .btn-primary:hover {
+     background: #0056b3;
+ }
+
+ /* Map Container Styles */
+ .map-container {
+     background: white;
+     border-radius: 20px;
+     padding: 25px;
+     border: 3px solid #e2e8f0;
+     transition: all 0.3s ease;
+     margin-bottom: 25px;
+ }
+
+ .map-container:hover {
+     border-color: #14b8a6;
+     box-shadow: 0 10px 30px rgba(20, 184, 166, 0.1);
+ }
+
+ .map-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     margin-bottom: 20px;
+ }
+
+ .map-title {
+     font-size: 1.5rem;
+     font-weight: 700;
+     color: #0f766e;
+ }
+
+ .map-controls {
+     display: flex;
+     gap: 10px;
+ }
+
+ .map-btn {
+     background: #14b8a6;
+     color: white;
+     border: none;
+     padding: 8px 16px;
+     border-radius: 15px;
+     cursor: pointer;
+     font-weight: 600;
+     transition: all 0.3s ease;
+ }
+
+ .map-btn:hover {
+     background: #0f766e;
+     opacity: 0.9;
+ }
+
+ .map-display {
+     background: #f0fdfa;
+     border: 2px dashed #14b8a6;
+     border-radius: 15px;
+     height: 250px;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     cursor: pointer;
+     transition: all 0.3s ease;
+ }
+
+ .map-display:hover {
+     background: #ccfbf1;
+ }
+
+ .map-icon {
+     font-size: 3rem;
+     color: #14b8a6;
+     margin-bottom: 15px;
+ }
+
+ .map-text {
+     font-size: 1.1rem;
+     font-weight: 600;
+     color: #0f766e;
+ }
+
+ @media (max-width: 768px) {
     .page-header {
         flex-direction: column;
         gap: 15px;
@@ -496,6 +605,21 @@
     .warehouse-status {
         margin-left: 0;
     }
-}
-</style>
-{% endblock %}
+ }
+ </style>
+
+ <script>
+ // Map functionality
+ function openFullMap() {
+     window.open('https://www.google.com/maps/@28.7144068,77.0909803,15z?entry=ttu&g_ep=EgoyMDI1MDgxMy4wIKXMDSoASAFQAw%3D%3D', '_blank');
+ }
+
+ function refreshMap() {
+     const mapDisplay = document.querySelector('.map-display');
+     mapDisplay.style.background = 'linear-gradient(135deg, #ccfbf1, #a7f3d0)';
+     setTimeout(() => {
+         mapDisplay.style.background = 'linear-gradient(135deg, #f0fdfa, #e6fffa)';
+     }, 500);
+ }
+ </script>
+ {% endblock %}

@@ -128,6 +128,154 @@ body {
     background: #f3f4f6;
 }
 
+.profile-dropdown.active .profile-btn {
+    border-color: #8b5cf6;
+    background: #f0fdfa;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+    position: relative;
+}
+
+.profile-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    min-width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.profile-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.profile-dropdown-header {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.profile-info {
+    text-align: left;
+}
+
+.profile-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.profile-email {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 0;
+}
+
+.profile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: #374151;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(-10px);
+    animation: slideInItem 0.3s ease forwards;
+}
+
+.profile-dropdown-item:nth-child(1) { animation-delay: 0.1s; }
+.profile-dropdown-item:nth-child(2) { animation-delay: 0.15s; }
+.profile-dropdown-item:nth-child(3) { animation-delay: 0.2s; }
+
+@keyframes slideInItem {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.profile-dropdown-item:hover {
+    background: #f8fafc;
+    color: #14b8a6;
+}
+
+.profile-dropdown-item.logout-item:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.profile-icon {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Profile dropdown arrow */
+.profile-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid white;
+}
+
+.profile-dropdown-menu::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #e2e8f0;
+}
+
 /* Main Dashboard Container */
 .dashboard-container {
     max-width: 1400px;
@@ -185,12 +333,16 @@ body {
 .workspace-selector:hover {
     border-color: #14b8a6;
     color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.15);
 }
 
 .workspace-selector.active {
     border-color: #14b8a6;
     background: #f0fdfa;
     color: #14b8a6;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.2);
 }
 
 .dropdown-arrow {
@@ -201,6 +353,169 @@ body {
 
 .workspace-selector.active .dropdown-arrow {
     transform: rotate(180deg);
+}
+
+/* Workspace Options Dropdown */
+.workspace-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 10px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    min-width: 280px;
+    max-width: 350px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    /* Temporary debugging - remove this later */
+    /* border: 2px solid red; */
+}
+
+.workspace-options.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+
+
+.workspace-option {
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+    opacity: 0;
+    transform: translateX(-10px);
+    animation: slideInWarehouse 0.3s ease forwards;
+}
+
+.workspace-option:nth-child(1) { animation-delay: 0.1s; }
+.workspace-option:nth-child(2) { animation-delay: 0.15s; }
+.workspace-option:nth-child(3) { animation-delay: 0.2s; }
+.workspace-option:nth-child(4) { animation-delay: 0.25s; }
+
+@keyframes slideInWarehouse {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.workspace-option:last-child {
+    border-bottom: none;
+}
+
+.workspace-option:hover {
+    background: #f8fafc;
+    transform: translateX(5px);
+}
+
+.warehouse-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 5px;
+}
+
+.warehouse-icon {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+}
+
+.warehouse-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.warehouse-location {
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-left: 32px;
+}
+
+/* Empty State Styling */
+.workspace-empty-state {
+    padding: 25px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+.empty-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.empty-description {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.add-warehouse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #14b8a6, #0d9488);
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+}
+
+.add-warehouse-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+/* Workspace dropdown arrow */
+.workspace-options::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 30px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid white;
+}
+
+.workspace-options::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 30px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #e2e8f0;
 }
 
 /* Stats Overview */
@@ -766,6 +1081,101 @@ body {
         padding: 15px 10px;
         font-size: 0.9rem;
     }
+    
+    /* Profile dropdown mobile adjustments */
+    .profile-dropdown-menu {
+        right: -10px;
+        min-width: 260px;
+    }
+    
+    .profile-dropdown-header {
+        padding: 15px;
+    }
+    
+    .profile-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+    
+    .profile-name {
+        font-size: 1rem;
+    }
+    
+    .profile-email {
+        font-size: 0.85rem;
+    }
+    
+    .profile-dropdown-item {
+        padding: 14px 15px;
+    }
+    
+    /* Workspace dropdown mobile adjustments */
+    .workspace-options {
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px) scale(0.95);
+        min-width: 260px;
+        max-width: 300px;
+    }
+    
+    .workspace-options.active {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    
+    .workspace-option {
+        padding: 14px 15px;
+    }
+    
+    .warehouse-info {
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+    
+    .warehouse-icon {
+        font-size: 1.1rem;
+        width: 18px;
+    }
+    
+    .warehouse-name {
+        font-size: 0.95rem;
+    }
+    
+    .warehouse-location {
+        font-size: 0.8rem;
+        margin-left: 28px;
+    }
+    
+    .workspace-empty-state {
+        padding: 20px 15px;
+    }
+    
+    .empty-icon {
+        font-size: 2rem;
+        margin-bottom: 12px;
+    }
+    
+    .empty-text {
+        font-size: 1rem;
+        margin-bottom: 6px;
+    }
+    
+    .empty-description {
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+    
+    .add-warehouse-btn {
+        padding: 10px 18px;
+        font-size: 0.85rem;
+    }
+    
+    /* Workspace dropdown arrow mobile adjustment */
+    .workspace-options::before,
+    .workspace-options::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
 
 /* Medium Mobile - 480px to 575px */
@@ -806,6 +1216,36 @@ body {
     .workspace-selector {
         min-width: auto;
         font-size: 0.9rem;
+    }
+    
+    /* Workspace dropdown medium mobile adjustments */
+    .workspace-options {
+        min-width: 240px;
+        max-width: 280px;
+    }
+    
+    .workspace-empty-state {
+        padding: 18px 12px;
+    }
+    
+    .empty-icon {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .empty-text {
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+    }
+    
+    .empty-description {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+    
+    .add-warehouse-btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
     }
     
     .stats-overview {

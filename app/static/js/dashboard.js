@@ -1,3 +1,37 @@
+// Profile dropdown functionality
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    const profileContainer = document.querySelector('.profile-dropdown');
+    const profileBtn = document.querySelector('.profile-btn');
+    
+    const isActive = dropdown.classList.contains('active');
+    
+    dropdown.classList.toggle('active');
+    profileContainer.classList.toggle('active');
+    
+    // Update ARIA attributes
+    profileBtn.setAttribute('aria-expanded', !isActive);
+}
+
+function closeProfileDropdown() {
+    const dropdown = document.getElementById('profileDropdown');
+    const profileContainer = document.querySelector('.profile-dropdown');
+    const profileBtn = document.querySelector('.profile-btn');
+    
+    dropdown.classList.remove('active');
+    profileContainer.classList.remove('active');
+    
+    // Update ARIA attributes
+    profileBtn.setAttribute('aria-expanded', 'false');
+}
+
+function showProfile() {
+    // Close dropdown first
+    closeProfileDropdown();
+    // Redirect to profile page
+    window.location.href = '/msme/profile';
+}
+
 // Mobile navigation functionality
 function toggleMobileMenu() {
     const mobileNav = document.getElementById('mobileNav');
@@ -115,11 +149,35 @@ function animateCard(card) {
 // Workspace dropdown functionality
 function toggleWorkspace() {
     const selector = document.getElementById('workspaceSelector');
-    selector.classList.toggle('active');
+    const options = document.getElementById('workspaceOptions');
+    const arrow = document.getElementById('dropdownArrow');
     
-    setTimeout(() => {
+    const isActive = options.classList.contains('active');
+    console.log('toggleWorkspace called, isActive:', isActive);
+    
+    if (isActive) {
+        // Close dropdown
+        console.log('Closing dropdown');
+        options.classList.remove('active');
         selector.classList.remove('active');
-    }, 2000);
+        arrow.textContent = '▼';
+    } else {
+        // Open dropdown
+        console.log('Opening dropdown');
+        options.classList.add('active');
+        selector.classList.add('active');
+        arrow.textContent = '▲';
+        
+        // Close dropdown after 5 seconds of inactivity
+        setTimeout(() => {
+            if (options.classList.contains('active')) {
+                console.log('Auto-closing dropdown');
+                options.classList.remove('active');
+                selector.classList.remove('active');
+                arrow.textContent = '▼';
+            }
+        }, 5000);
+    }
 }
 
 // Map functionality
@@ -133,6 +191,40 @@ function refreshMap() {
     setTimeout(() => {
         mapDisplay.style.background = 'linear-gradient(135deg, #f0fdfa, #e6fffa)';
     }, 500);
+}
+
+// Function to select warehouse
+function selectWorkspace(warehouseId, warehouseName) {
+    console.log('selectWorkspace called with:', warehouseId, warehouseName);
+    
+    // Update the display
+    document.getElementById('selectedWorkspace').textContent = warehouseName;
+    
+    // Close the dropdown
+    const options = document.getElementById('workspaceOptions');
+    const selector = document.getElementById('workspaceSelector');
+    const arrow = document.getElementById('dropdownArrow');
+    
+    options.classList.remove('active');
+    selector.classList.remove('active');
+    arrow.textContent = '▼';
+    
+    // Redirect to set the warehouse
+    console.log('Redirecting to:', "/msme/set-warehouse/" + warehouseId);
+    window.location.href = "/msme/set-warehouse/" + warehouseId;
+}
+
+// Function to add new delivery
+function addNewDelivery() {
+    window.location.href = "/msme/add_order";
+}
+
+// Function to animate card
+function animateCard(card) {
+    card.style.transform = 'scale(1.05)';
+    setTimeout(() => {
+        card.style.transform = 'scale(1)';
+    }, 200);
 }
 
 
@@ -167,11 +259,48 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Close profile dropdown on outside click
+    document.addEventListener('click', function(e) {
+        const profileDropdown = document.getElementById('profileDropdown');
+        const profileBtn = document.querySelector('.profile-btn');
+        
+        if (profileDropdown && profileDropdown.classList.contains('active')) {
+            if (!profileDropdown.contains(e.target) && e.target !== profileBtn) {
+                closeProfileDropdown();
+            }
+        }
+    });
+    
+         // Close workspace dropdown on outside click
+     document.addEventListener('click', function(e) {
+         const workspaceOptions = document.getElementById('workspaceOptions');
+         const workspaceSelector = document.getElementById('workspaceSelector');
+         
+         if (workspaceOptions && workspaceOptions.classList.contains('active')) {
+             if (!workspaceOptions.contains(e.target) && !workspaceSelector.contains(e.target)) {
+                 console.log('Closing workspace dropdown - clicked outside');
+                 workspaceOptions.classList.remove('active');
+                 workspaceSelector.classList.remove('active');
+                 document.getElementById('dropdownArrow').textContent = '▼';
+             }
+         }
+     });
 
-    // Handle escape key for mobile menu
+    // Handle escape key for mobile menu, profile dropdown, and workspace dropdown
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeMobileMenu();
+            closeProfileDropdown();
+            
+            // Close workspace dropdown
+            const workspaceOptions = document.getElementById('workspaceOptions');
+            const workspaceSelector = document.getElementById('workspaceSelector');
+            if (workspaceOptions && workspaceOptions.classList.contains('active')) {
+                workspaceOptions.classList.remove('active');
+                workspaceSelector.classList.remove('active');
+                document.getElementById('dropdownArrow').textContent = '▼';
+            }
         }
     });
 

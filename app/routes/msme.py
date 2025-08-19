@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, session
+from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
 from ..models import Order, User, Driver, Warehouse
 from .. import db
 from flask_login import login_required, current_user
 from ..forms import OrderForm, WarehouseForm
+from datetime import datetime
 
 msme = Blueprint('msme', __name__)
 
@@ -172,7 +173,7 @@ def orders():
 
 
 # Add a new order
-@msme.route('/orders/add', methods=['GET', 'POST'])
+@msme.route('/add_order', methods=['GET', 'POST'])
 @login_required
 def add_order():
     # Check if user has a current warehouse
@@ -257,3 +258,73 @@ def order_detail(order_id):
         return redirect(url_for('msme.orders'))
 
     return render_template('msme/order_detail.html', order=order)
+
+
+#######################################################################################################################
+#################################              PROFILE ROUTES                     #####################################
+#######################################################################################################################
+
+@msme.route('/profile')
+@login_required
+def profile():
+    """Display user profile page"""
+    return render_template('msme/profile.html')
+
+
+@msme.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile information"""
+    form_type = request.form.get('form_type')
+    
+    try:
+        if form_type == 'personal':
+            # Update personal information
+            current_user.name = request.form.get('name', current_user.name)
+            current_user.phone = request.form.get('phone', current_user.phone)
+            
+        elif form_type == 'company':
+            # Update company information
+            current_user.company_name = request.form.get('company_name', current_user.company_name)
+            current_user.business_address = request.form.get('business_address', current_user.business_address)
+            current_user.gst_number = request.form.get('gst_number', current_user.gst_number)
+            current_user.pan_number = request.form.get('pan_number', current_user.pan_number)
+            
+        elif form_type == 'subscription':
+            # Update subscription information
+            current_user.subscription_plan = request.form.get('subscription_plan', current_user.subscription_plan)
+            current_user.billing_email = request.form.get('billing_email', current_user.billing_email)
+            current_user.payment_method = request.form.get('payment_method', current_user.payment_method)
+            
+        elif form_type == 'preferences':
+            # Update preferences
+            warehouse_id = request.form.get('current_warehouse_id')
+            if warehouse_id:
+                # Verify warehouse belongs to user
+                warehouse = Warehouse.query.filter_by(id=warehouse_id, user_id=current_user.id).first()
+                if warehouse:
+                    current_user.current_warehouse_id = int(warehouse_id)
+            
+            current_user.timezone = request.form.get('timezone', current_user.timezone)
+            current_user.language = request.form.get('language', current_user.language)
+            current_user.email_notifications = 'email_notifications' in request.form
+            current_user.sms_notifications = 'sms_notifications' in request.form
+        
+        # Update the updated_at timestamp
+        current_user.updated_at = datetime.now()
+        
+        db.session.commit()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Profile updated successfully!'})
+        else:
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('msme.profile'))
+            
+    except Exception as e:
+        db.session.rollback()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': f'Error updating profile: {str(e)}'})
+        else:
+            flash(f'Error updating profile: {str(e)}', 'error')
+            return redirect(url_for('msme.profile'))

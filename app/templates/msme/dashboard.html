@@ -34,7 +34,27 @@
             
             <div class="user-section">
                 <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-                <button class="profile-btn">{{ current_user.name[0] }}</button>
+                <div class="profile-dropdown">
+                    <button class="profile-btn" onclick="toggleProfileDropdown()" aria-label="Profile menu" aria-expanded="false" aria-haspopup="true">{{ current_user.name[0] }}</button>
+                    <div class="profile-dropdown-menu" id="profileDropdown" role="menu" aria-labelledby="profileBtn">
+                        <div class="profile-dropdown-header">
+                            <div class="profile-avatar">{{ current_user.name[0] }}</div>
+                            <div class="profile-info">
+                                <div class="profile-name">{{ current_user.name }}</div>
+                                <div class="profile-email">{{ current_user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="#" class="profile-dropdown-item" onclick="showProfile()">
+                            <span class="profile-icon">👤</span>
+                            Show Profile
+                        </a>
+                        <a href="{{ url_for('auth.logout') }}" class="profile-dropdown-item logout-item">
+                            <span class="profile-icon">🚪</span>
+                            Logout
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -85,15 +105,29 @@
                         </span>
                         <span class="dropdown-arrow" id="dropdownArrow">▼</span>
                     </div>
-                    {% if user_warehouses %}
-                    <div class="workspace-options" id="workspaceOptions" style="display: none;">
-                        {% for warehouse in user_warehouses %}
-                        <div class="workspace-option" onclick="selectWorkspace('{{ warehouse.id }}', '{{ warehouse.name }}')">
-                            {{ warehouse.name }}
-                        </div>
-                        {% endfor %}
+                    <div class="workspace-options" id="workspaceOptions">
+                        {% if user_warehouses %}
+                            {% for warehouse in user_warehouses %}
+                            <div class="workspace-option" onclick="selectWorkspace('{{ warehouse.id }}', '{{ warehouse.name }}')">
+                                <div class="warehouse-info">
+                                    <span class="warehouse-icon">🏢</span>
+                                    <span class="warehouse-name">{{ warehouse.name }}</span>
+                                </div>
+                                <span class="warehouse-location">{{ warehouse.city }}, {{ warehouse.state }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="workspace-empty-state">
+                                <div class="empty-icon">🏗️</div>
+                                <div class="empty-text">No warehouses yet</div>
+                                <div class="empty-description">Create your first warehouse to get started</div>
+                                <a href="{{ url_for('msme.add_warehouse') }}" class="add-warehouse-btn">
+                                    <span class="btn-icon">➕</span>
+                                    Add Warehouse
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -259,47 +293,7 @@
     </div>
 
    
-    <script>
-        // Function to select warehouse
-        function selectWorkspace(warehouseId, warehouseName) {
-            // Update the display
-            document.getElementById('selectedWorkspace').textContent = warehouseName;
-            
-            // Hide the options
-            document.getElementById('workspaceOptions').style.display = 'none';
-            
-            // Update the arrow
-            document.getElementById('dropdownArrow').textContent = '▼';
-            
-            // Redirect to set the warehouse
-            window.location.href = "{{ url_for('msme.set_warehouse', warehouse_id=0) }}".replace('0', warehouseId);
-        }
 
-        // Function to add new delivery
-        function addNewDelivery() {
-            window.location.href = "{{ url_for('msme.add_order') }}";
-        }
-
-        // Function to refresh map
-        function refreshMap() {
-            // Add map refresh logic here
-            console.log('Refreshing map...');
-        }
-
-        // Function to open full map
-        function openFullMap() {
-            // Add full map logic here
-            console.log('Opening full map...');
-        }
-
-        // Function to animate card
-        function animateCard(card) {
-            card.style.transform = 'scale(1.05)';
-            setTimeout(() => {
-                card.style.transform = 'scale(1)';
-            }, 200);
-        }
-    </script>
 {% endblock %}
 
 {% block extra_js %}

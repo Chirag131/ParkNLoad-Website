@@ -37,10 +37,30 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
-
+    phone = db.Column(db.String(15))
+    
+    # Company Information
     company_name = db.Column(db.String(150))
+    business_address = db.Column(db.Text)
+    gst_number = db.Column(db.String(15))
+    pan_number = db.Column(db.String(10))
+    
+    # Subscription & Billing
     subscription_plan = db.Column(db.String(50), default="free")
+    billing_email = db.Column(db.String(120))
+    payment_method = db.Column(db.String(50))
+    
+    # Preferences
     current_warehouse_id = db.Column(db.Integer, db.ForeignKey("warehouses.id"), nullable=True)
+    timezone = db.Column(db.String(50), default="Asia/Kolkata")
+    language = db.Column(db.String(10), default="en")
+    email_notifications = db.Column(db.Boolean, default=True)
+    sms_notifications = db.Column(db.Boolean, default=True)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    last_login = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     # Relationships
     warehouses = db.relationship("Warehouse", back_populates="user", lazy=True, cascade="all, delete-orphan", foreign_keys=[Warehouse.user_id])
