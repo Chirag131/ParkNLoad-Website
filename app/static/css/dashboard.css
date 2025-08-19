@@ -633,19 +633,57 @@ body {
 
 .map-display {
     background: #f0fdfa;
-    border: 2px dashed #14b8a6;
+    border: 2px solid #14b8a6;
     border-radius: 15px;
-    height: 350px;
+    height: 450px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
 }
 
 .map-display:hover {
     background: #ccfbf1;
+}
+
+/* Interactive map styles */
+.map-display.leaflet-container {
+    border: 2px solid #14b8a6;
+    border-radius: 15px;
+    height: 450px !important;
+    width: 100% !important;
+    cursor: default;
+}
+
+.map-display.leaflet-container:hover {
+    background: none;
+}
+
+/* Ensure map container is properly sized */
+#dashboardMap {
+    width: 100% !important;
+    height: 450px !important;
+    min-height: 450px !important;
+}
+
+/* Mobile responsive map */
+@media (max-width: 768px) {
+    .map-display {
+        height: 400px;
+    }
+    
+    .map-display.leaflet-container {
+        height: 400px !important;
+    }
+    
+    #dashboardMap {
+        height: 400px !important;
+        min-height: 400px !important;
+    }
 }
 
 .map-icon {
@@ -1270,7 +1308,7 @@ body {
     }
     
     .map-display {
-        height: 240px;
+        height: 300px;
     }
     
     .map-icon {
@@ -1386,7 +1424,7 @@ body {
     }
     
     .map-display {
-        height: 200px;
+        height: 300px;
     }
     
     .map-icon {
@@ -1520,7 +1558,7 @@ body {
     }
     
     .map-display {
-        height: 180px;
+        height: 250px;
     }
 }
 
@@ -1572,4 +1610,49 @@ body {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.8; }
+}
+
+/* Map marker animations */
+.leaflet-marker-icon.waiting-truck {
+    animation: waitingPulse 2s ease-in-out infinite;
+}
+
+@keyframes waitingPulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    50% { 
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Additional map styling for better visibility */
+.leaflet-popup-content {
+    font-family: 'Arial', sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.leaflet-popup-content strong {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* Ensure map controls are visible */
+.leaflet-control-zoom {
+    border: 2px solid #14b8a6 !important;
+    border-radius: 8px !important;
+}
+
+.leaflet-control-zoom a {
+    background: white !important;
+    color: #14b8a6 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #f0fdfa !important;
+    color: #0f766e !important;
 }

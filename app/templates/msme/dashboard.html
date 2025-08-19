@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 {% endblock %}
 
 {% block content %}
@@ -29,6 +30,9 @@
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" onclick="setActive(this)">Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('msme.ltc') }}" class="nav-link" onclick="setActive(this)">Live Tracking</a>
                 </li>
             </ul>
             
@@ -84,6 +88,9 @@
             </li>
             <li class="mobile-nav-item">
                 <a href="#" class="mobile-nav-link" onclick="setMobileActive(this)">Inventory Forecasting</a>
+            </li>
+            <li class="mobile-nav-item">
+                <a href="{{ url_for('msme.ltc') }}" class="mobile-nav-link" onclick="setMobileActive(this)">Live Tracking</a>
             </li>
         </ul>
     </div>
@@ -159,13 +166,12 @@
                 <div class="map-header">
                     <div class="map-title">Live Tracking Map</div>
                     <div class="map-controls">
-                        <button class="map-btn" onclick="refreshMap()">Refresh</button>
-                        <button class="map-btn" onclick="openFullMap()">Full View</button>
+                        <button class="map-btn" onclick="refreshMap()">Reset Map</button>
+                        <button class="map-btn" onclick="openLTC()">Full View</button>
                     </div>
                 </div>
-                <div class="map-display" onclick="openFullMap()">
-                    <div class="map-icon">🗺️</div>
-                    <div class="map-text">Click to view interactive map</div>
+                <div class="map-display" id="dashboardMap">
+                    <!-- Interactive map will be loaded here -->
                 </div>
             </div>
 
@@ -297,5 +303,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

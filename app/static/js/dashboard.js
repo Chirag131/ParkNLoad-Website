@@ -180,17 +180,412 @@ function toggleWorkspace() {
     }
 }
 
+// Dashboard Map System - Using LTC Logic
+class DashboardLogisticsSystem {
+    constructor() {
+        this.warehouse = {
+            center: { lat: 28.48, lng: 77.02 },
+            docksAvailable: 1,
+            maxDocks: 1
+        };
+
+        this.zones = this.initializeZones();
+        this.trucks = this.initializeTrucks();
+        this.truckQueue = [1, 2, 3, 4, 5, 6, 7, 8];
+        this.map = null;
+        this.truckMarkers = new Map();
+        this.isPaused = false;
+
+        this.initializeMap();
+        this.renderAll();
+        this.startAutoUpdate();
+    }
+
+    initializeZones() {
+        // Generate waiting areas in Buffer Zone
+        const waitingAreas = [];
+        const minSeparation = 0.0005; // ~50m
+        
+        for (let i = 0; i < 8; i++) {
+            let placed = false;
+            let attempts = 0;
+            
+            while (!placed && attempts < 100) {
+                const angle = Math.random() * 2 * Math.PI;
+                const dist = 0.002 + Math.random() * 0.003; // ~200m to 500m
+                const lat = this.warehouse.center.lat + dist * Math.cos(angle);
+                const lng = this.warehouse.center.lng + dist * Math.sin(angle);
+                
+                // Check separation from existing areas
+                let tooClose = false;
+                for (let area of waitingAreas) {
+                    const dx = area.lng - lng;
+                    const dy = area.lat - lat;
+                    const sep = Math.sqrt(dx * dx + dy * dy);
+                    if (sep < minSeparation) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    waitingAreas.push({ lat, lng, occupied: false });
+                    placed = true;
+                }
+                attempts++;
+            }
+        }
+
+        return {
+            warehouse: { radius: 0.001, capacity: 1 }, // ~100m
+            buffer: { radius: 0.005, waitingAreas }, // ~500m
+            approach: { radius: 0.01 } // ~1km
+        };
+    }
+
+    initializeTrucks() {
+        const trucksArray = [];
+        const minTruckSeparation = 0.001; // ~100m
+        
+        for (let i = 1; i <= 8; i++) {
+            let placed = false;
+            let attempts = 0;
+            let lat, lng, angle;
+            
+            while (!placed && attempts < 100) {
+                angle = Math.random() * 2 * Math.PI;
+                const dist = 0.005 + Math.random() * 0.005; // ~500m to 1km
+                lat = this.warehouse.center.lat + dist * Math.cos(angle);
+                lng = this.warehouse.center.lng + dist * Math.sin(angle);
+                
+                // Check separation from other trucks
+                let tooClose = false;
+                for (let j = 0; j < trucksArray.length; j++) {
+                    const dx = trucksArray[j].coordinates.lng - lng;
+                    const dy = trucksArray[j].coordinates.lat - lat;
+                    const sep = Math.sqrt(dx * dx + dy * dy);
+                    if (sep < minTruckSeparation) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    placed = true;
+                }
+                attempts++;
+            }
+            
+            trucksArray.push({
+                id: i,
+                type: 'Truck',
+                zone: i === 1 ? 'Approach Zone' : 'Outside',
+                coordinates: { lat, lng },
+                status: i === 1 ? 'Heading to Dock' : 'En Route',
+                unloadTimer: 0,
+                queuePosition: null,
+                waitingArea: null,
+                incomingDirection: angle,
+                redirectTo: i === 1 ? 'Warehouse Zone' : 'Checking...'
+            });
+        }
+        
+        return trucksArray;
+    }
+
+    initializeMap() {
+        const mapContainer = document.getElementById('dashboardMap');
+        if (!mapContainer) return;
+
+        // Fix for default markers in Leaflet
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        });
+
+        // Initialize map
+        this.map = L.map('dashboardMap').setView(
+            [this.warehouse.center.lat, this.warehouse.center.lng], 
+            15
+        );
+
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(this.map);
+
+        // Add zone circles
+        L.circle([this.warehouse.center.lat, this.warehouse.center.lng], {
+            color: '#22c55e',
+            fillColor: '#22c55e',
+            fillOpacity: 0.2,
+            radius: this.zones.warehouse.radius * 100000,
+            weight: 2
+        }).addTo(this.map).bindPopup('<strong>Warehouse Zone</strong><br/>Loading/Unloading Area');
+
+        L.circle([this.warehouse.center.lat, this.warehouse.center.lng], {
+            color: '#eab308',
+            fillColor: '#eab308',
+            fillOpacity: 0.15,
+            radius: this.zones.buffer.radius * 100000,
+            weight: 2
+        }).addTo(this.map).bindPopup('<strong>Buffer Zone</strong><br/>Waiting Areas');
+
+        L.circle([this.warehouse.center.lat, this.warehouse.center.lng], {
+            color: '#64748b',
+            fillColor: '#64748b',
+            fillOpacity: 0.1,
+            radius: this.zones.approach.radius * 100000,
+            weight: 2
+        }).addTo(this.map).bindPopup('<strong>Approach Zone</strong><br/>Entry Detection Area');
+
+        // Add waiting areas
+        this.zones.buffer.waitingAreas.forEach((area, index) => {
+            const bounds = [
+                [area.lat - 0.0002, area.lng - 0.0002],
+                [area.lat + 0.0002, area.lng + 0.0002]
+            ];
+            L.rectangle(bounds, {
+                color: '#f97316',
+                fillColor: '#f97316',
+                fillOpacity: area.occupied ? 0.6 : 0.3,
+                weight: 1
+            }).addTo(this.map).bindPopup(`<strong>Waiting Area ${index + 1}</strong><br/>${area.occupied ? 'Occupied' : 'Available'}`);
+        });
+    }
+
+    updateMap() {
+        if (!this.map) return;
+
+        // Clear existing truck markers
+        this.truckMarkers.forEach(marker => {
+            this.map.removeLayer(marker);
+        });
+        this.truckMarkers.clear();
+
+        // Add truck markers
+        this.trucks.forEach(truck => {
+            if (truck.status !== 'Departed') {
+                let color = '#3b82f6'; // Default blue
+                if (truck.status === 'Unloading') color = '#22c55e'; // Green
+                else if (truck.status === 'Waiting') color = '#ef4444'; // Red
+                else if (truck.status === 'Heading to Dock') color = '#8b5cf6'; // Purple
+
+                const marker = L.circleMarker([truck.coordinates.lat, truck.coordinates.lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.8,
+                    radius: 8,
+                    weight: 2
+                }).addTo(this.map)
+                  .bindPopup(`
+                    <div style="font-size: 0.875rem;">
+                        <strong>Truck ${truck.id}</strong><br/>
+                        Zone: ${truck.zone}<br/>
+                        Status: ${truck.status}<br/>
+                        Redirect: ${truck.redirectTo}
+                    </div>
+                  `);
+
+                this.truckMarkers.set(truck.id, marker);
+            }
+        });
+    }
+
+    findNearestWaitingArea(truck) {
+        const waitingAreas = this.zones.buffer.waitingAreas;
+        let nearest = null;
+        let minDist = Infinity;
+        const truckDirection = truck.incomingDirection;
+        
+        waitingAreas.forEach(area => {
+            if (!area.occupied) {
+                const dx = area.lng - truck.coordinates.lng;
+                const dy = area.lat - truck.coordinates.lat;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const angleDiff = Math.abs(Math.atan2(dy, dx) - truckDirection);
+                const adjustedDist = dist * (1 + angleDiff / Math.PI);
+                
+                if (adjustedDist < minDist) {
+                    minDist = adjustedDist;
+                    nearest = area;
+                }
+            }
+        });
+        
+        if (nearest) {
+            nearest.occupied = true;
+            return nearest;
+        }
+        
+        return null;
+    }
+
+    releaseWaitingArea(truck) {
+        if (truck.waitingArea) {
+            truck.waitingArea.occupied = false;
+            truck.waitingArea = null;
+        }
+    }
+
+    simulateMovement(truck) {
+        if (truck.status === 'Waiting' || truck.status === 'Unloading') {
+            if (truck.waitingArea) {
+                truck.coordinates.lat = truck.waitingArea.lat;
+                truck.coordinates.lng = truck.waitingArea.lng;
+            }
+            return;
+        }
+        
+        let targetLat = this.warehouse.center.lat;
+        let targetLng = this.warehouse.center.lng;
+        
+        if (truck.redirectTo === 'Waiting Area' && truck.waitingArea) {
+            targetLat = truck.waitingArea.lat;
+            targetLng = truck.waitingArea.lng;
+        }
+        
+        const deltaLat = (targetLat - truck.coordinates.lat) * 0.05;
+        const deltaLng = (targetLng - truck.coordinates.lng) * 0.05;
+        truck.coordinates.lat += deltaLat;
+        truck.coordinates.lng += deltaLng;
+        
+        // Check if arrived at target
+        if (Math.abs(targetLat - truck.coordinates.lat) < 0.0001 && 
+            Math.abs(targetLng - truck.coordinates.lng) < 0.0001) {
+            if (truck.redirectTo === 'Waiting Area') {
+                truck.status = 'Waiting';
+            } else if (truck.redirectTo === 'Warehouse Zone') {
+                truck.status = 'Unloading';
+                truck.unloadTimer = 5;
+            }
+        }
+    }
+
+    checkAndRedirect() {
+        if (this.isPaused) return;
+
+        const activeTrucks = this.trucks.filter(truck => truck.status !== 'Departed');
+        
+        activeTrucks.forEach(truck => {
+            // Update queue position
+            truck.queuePosition = this.truckQueue.indexOf(truck.id);
+
+            const distance = Math.sqrt(
+                Math.pow(truck.coordinates.lat - this.warehouse.center.lat, 2) +
+                Math.pow(truck.coordinates.lng - this.warehouse.center.lng, 2)
+            );
+
+            // Determine current zone
+            let assignedZone = 'Outside';
+            if (distance <= this.zones.warehouse.radius) {
+                assignedZone = 'Warehouse Zone';
+            } else if (distance <= this.zones.buffer.radius) {
+                assignedZone = 'Buffer Zone';
+            } else if (distance <= this.zones.approach.radius) {
+                assignedZone = 'Approach Zone';
+            }
+            truck.zone = assignedZone;
+
+            // Redirect logic
+            if (truck.id !== 1 && assignedZone === 'Buffer Zone' && 
+                !truck.waitingArea && truck.redirectTo !== 'Warehouse Zone') {
+                const waitingArea = this.findNearestWaitingArea(truck);
+                if (waitingArea) {
+                    truck.waitingArea = waitingArea;
+                    truck.redirectTo = 'Waiting Area';
+                    truck.status = 'En Route';
+                }
+            }
+
+            // Handle advancement to warehouse
+            if (truck.queuePosition === 0 && this.warehouse.docksAvailable > 0 && 
+                truck.status === 'Waiting') {
+                this.releaseWaitingArea(truck);
+                truck.redirectTo = 'Warehouse Zone';
+                truck.status = 'Heading to Dock';
+                this.warehouse.docksAvailable--;
+            }
+
+            // Handle arrival at warehouse
+            if (assignedZone === 'Warehouse Zone' && truck.status !== 'Unloading') {
+                truck.status = 'Unloading';
+                truck.unloadTimer = 5;
+                truck.redirectTo = 'Warehouse Zone';
+                const queueIndex = this.truckQueue.indexOf(truck.id);
+                if (queueIndex > -1) {
+                    this.truckQueue.splice(queueIndex, 1);
+                }
+            }
+
+            // Handle unloading
+            if (truck.status === 'Unloading') {
+                truck.unloadTimer--;
+                if (truck.unloadTimer <= 0) {
+                    truck.status = 'Departed';
+                    this.warehouse.docksAvailable++;
+                }
+            }
+
+            this.simulateMovement(truck);
+        });
+    }
+
+    renderAll() {
+        this.updateMap();
+    }
+
+    startAutoUpdate() {
+        setInterval(() => {
+            this.checkAndRedirect();
+            this.renderAll();
+        }, 300);
+    }
+
+    reset() {
+        // Clear existing map
+        if (this.map) {
+            this.map.remove();
+            this.map = null;
+        }
+        this.truckMarkers.clear();
+        
+        // Reinitialize everything
+        this.warehouse.docksAvailable = 1;
+        this.zones = this.initializeZones();
+        this.trucks = this.initializeTrucks();
+        this.truckQueue = [1, 2, 3, 4, 5, 6, 7, 8];
+        
+        // Reinitialize the map
+        setTimeout(() => {
+            this.initializeMap();
+            this.renderAll();
+        }, 100);
+    }
+}
+
+// Global dashboard system instance
+let dashboardSystem = null;
+
 // Map functionality
 function openFullMap() {
     window.open('https://www.google.com/maps/@28.7144068,77.0909803,15z?entry=ttu&g_ep=EgoyMDI1MDgxMy4wIKXMDSoASAFQAw%3D%3D', '_blank');
 }
 
+function openLTC() {
+    window.location.href = '/msme/ltc';
+}
+
 function refreshMap() {
-    const mapDisplay = document.querySelector('.map-display');
-    mapDisplay.style.background = 'linear-gradient(135deg, #ccfbf1, #a7f3d0)';
-    setTimeout(() => {
-        mapDisplay.style.background = 'linear-gradient(135deg, #f0fdfa, #e6fffa)';
-    }, 500);
+    if (dashboardSystem) {
+        dashboardSystem.reset();
+    }
+}
+
+function initializeDashboardMap() {
+    dashboardSystem = new DashboardLogisticsSystem();
 }
 
 // Function to select warehouse
@@ -248,6 +643,12 @@ setInterval(() => {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard map
+    initializeDashboardMap();
+    
+    // Start truck movement simulation
+    // setInterval(simulateDashboardTruckMovement, 300); // This line is removed as per the new_code
+    
     // Close mobile menu on outside click
     document.addEventListener('click', function(e) {
         const mobileNav = document.getElementById('mobileNav');

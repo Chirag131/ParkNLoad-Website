@@ -271,6 +271,13 @@ def profile():
     return render_template('msme/profile.html')
 
 
+@msme.route('/ltc')
+@login_required
+def ltc():
+    """Display Live Tracking Center page"""
+    return render_template('msme/ltc.html')
+
+
 @msme.route('/update_profile', methods=['POST'])
 @login_required
 def update_profile():
