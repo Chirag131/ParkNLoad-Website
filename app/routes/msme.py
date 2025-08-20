@@ -12,18 +12,30 @@ msme = Blueprint('msme', __name__)
 def dashboard():
     # Get warehouse count and recent orders for dashboard
     warehouse_count = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).count()
-    recent_orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
+
+    # Determine selected warehouse (if any)
+    selected_warehouse_id = current_user.current_warehouse_id
+
+    # Base query for user's orders
+    base_query = Order.query.filter_by(user_id=current_user.id)
+    if selected_warehouse_id:
+        base_query = base_query.filter_by(warehouse_id=selected_warehouse_id)
+
+    # Recent orders - scoped to selected warehouse if set
+    recent_orders = base_query.order_by(Order.created_at.desc()).limit(5).all()
     
-    # Get order type statistics
-    incoming_orders = Order.query.filter_by(user_id=current_user.id, order_type="incoming").count()
-    outgoing_orders = Order.query.filter_by(user_id=current_user.id, order_type="outgoing").count()
+    # Get order type statistics - scoped if warehouse selected
+    incoming_orders = base_query.filter_by(order_type="incoming").count()
+    outgoing_orders = base_query.filter_by(order_type="outgoing").count()
     
     # Get user's warehouses for selection
     user_warehouses = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).all()
     
     # Active orders (today or future)
-    active_orders_count = Order.query.filter_by(user_id=current_user.id) \
-        .filter(Order.date >= datetime.now().date()).count()
+    active_orders_query = Order.query.filter_by(user_id=current_user.id).filter(Order.date >= datetime.now().date())
+    if selected_warehouse_id:
+        active_orders_query = active_orders_query.filter_by(warehouse_id=selected_warehouse_id)
+    active_orders_count = active_orders_query.count()
     
     return render_template('msme/dashboard.html', 
                          warehouse_count=warehouse_count, 
