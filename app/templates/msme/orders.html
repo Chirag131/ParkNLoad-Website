@@ -154,6 +154,9 @@
                                 </div>
                             </td>
                             <td>
+                                {% if order.date < now_date %}
+                                <div class="status-badge status-complete">Delivered</div>
+                                {% else %}
                                 <div class="order-type-badge {{ order.order_type }}">
                                     {% if order.order_type == 'incoming' %}
                                         🔄 Incoming
@@ -161,6 +164,7 @@
                                         📤 Outgoing
                                     {% endif %}
                                 </div>
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="priority-badge {{ order.package_priority }}">

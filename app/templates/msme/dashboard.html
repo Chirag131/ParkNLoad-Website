@@ -123,6 +123,13 @@
                                 <span class="warehouse-location">{{ warehouse.city }}, {{ warehouse.state }}</span>
                             </div>
                             {% endfor %}
+                            <div class="workspace-option" onclick="window.location.href='{{ url_for('msme.add_warehouse') }}'">
+                                <div class="warehouse-info">
+                                    <span class="warehouse-icon">➕</span>
+                                    <span class="warehouse-name">Add Warehouse</span>
+                                </div>
+                                <span class="warehouse-location">Create a new warehouse</span>
+                            </div>
                         {% else %}
                             <div class="workspace-empty-state">
                                 <div class="empty-icon">🏗️</div>
@@ -258,6 +265,9 @@
                                     </div>
                                 </td>
                                 <td>
+                                    {% if order.date < now_date %}
+                                    <div class="status-badge status-complete">Delivered</div>
+                                    {% else %}
                                     <div class="status-badge status-pending">
                                         {% if order.order_type == 'incoming' %}
                                             Incoming
@@ -265,6 +275,7 @@
                                             Outgoing
                                         {% endif %}
                                     </div>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div class="company-name">{{ order.time_slot }}</div>

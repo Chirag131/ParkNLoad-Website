@@ -27,7 +27,8 @@ def dashboard():
                          incoming_orders=incoming_orders,
                          outgoing_orders=outgoing_orders,
                          user_warehouses=user_warehouses,
-                         current_warehouse=current_user.current_warehouse)
+                         current_warehouse=current_user.current_warehouse,
+                         now_date=datetime.now().date())
 
 
 @msme.route('/set-warehouse/<int:warehouse_id>')
@@ -169,7 +170,8 @@ def orders():
     return render_template('msme/orders.html', 
                          orders=orders, 
                          selected_warehouse=warehouse,
-                         selected_order_type=order_type)
+                         selected_order_type=order_type,
+                         now_date=datetime.now().date())
 
 
 # Add a new order
