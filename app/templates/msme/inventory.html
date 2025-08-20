@@ -15,6 +15,34 @@
         </div>
     </div>
 
+    <!-- Auto Zoning (no image required) -->
+    <div class="filter-section" style="margin-bottom: 20px;">
+        <h3 style="margin-bottom: 12px;">Auto-Zoning Recommendation</h3>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Warehouse Width (m)</label>
+                <input type="number" id="whWidth" class="filter-input" placeholder="e.g., 50" min="1" step="0.1">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Warehouse Height (m)</label>
+                <input type="number" id="whHeight" class="filter-input" placeholder="e.g., 30" min="1" step="0.1">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Zoning Strategy</label>
+                <select id="zoningStrategy" class="filter-select">
+                    <option value="type">By Category (Type)</option>
+                    <option value="name">By Item</option>
+                    <option value="usage">By Usage Frequency</option>
+                </select>
+            </div>
+            <div class="filter-group" style="align-self: end;">
+                <button class="btn btn-primary" id="generatePlanBtn">Generate Zones</button>
+            </div>
+        </div>
+        <div id="plannerError" style="color:#dc2626; margin-top:8px; display:none;"></div>
+    </div>
+    
+
     <div class="filter-section">
         <div class="filter-row">
             <div class="filter-group">
@@ -72,6 +100,8 @@
 
 {% block extra_js %}
 <script>
+// No planner logic
+
 function filterInventory(query) {
     query = (query || '').toLowerCase();
     const rows = document.querySelectorAll('#inventoryBody tr');
@@ -90,6 +120,8 @@ function filterType(type) {
         row.style.display = (!type || rowType === type) ? '' : 'none';
     });
 }
+
+// Planner removed
 </script>
 {% endblock %}
 

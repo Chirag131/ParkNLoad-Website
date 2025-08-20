@@ -348,9 +348,11 @@ def inventory():
                 'type': o.package_type or 'general',
                 'quantity': 0,
                 'last_movement': o.created_at,
+                'usage_count': 0,
             }
         inventory_items[key]['quantity'] += int(o.quantity or 0)
-        if o.created_at and o.created_at > inventory_items[key]['last_movement']:
+        inventory_items[key]['usage_count'] += 1
+        if o.created_at and (inventory_items[key]['last_movement'] is None or o.created_at > inventory_items[key]['last_movement']):
             inventory_items[key]['last_movement'] = o.created_at
 
     # Convert to list
