@@ -3,6 +3,10 @@
 {% block title %}Create Order{% endblock %}
 
 {% block content %}
+<script>
+  // Force navbar to highlight Orders for this page
+  window.NAV_ACTIVE_PATH = '/msme/orders';
+</script>
 <div class="container">
     <div class="page-header">
         <h2>Create New Order</h2>
@@ -19,7 +23,16 @@
         </div>
     </div>
 
-    <!-- Order Type Indicator -->
+    <!-- Order Type Controls -->
+    <div class="order-type-controls">
+        <button type="button" class="btn btn-outline" id="btnIncoming">Incoming</button>
+        <button type="button" class="btn btn-primary" id="btnOutgoing">Outgoing</button>
+        {{ form.order_type(id='order_type') }}
+        <div class="warehouse-select" id="warehouseSelect" style="display:none; margin-left: auto;">
+            <label style="margin-right:8px;">Warehouse</label>
+            {{ form.selected_warehouse_id(class="form-control", style="min-width:200px;") }}
+        </div>
+    </div>
     <div id="order-type-indicator" class="order-type-indicator outgoing">
         📤 Outgoing Order (Pickup from your warehouse)
     </div>
@@ -336,6 +349,13 @@
     transition: all 0.3s ease;
 }
 
+.order-type-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
 .order-type-indicator.incoming {
     background: #d1ecf1;
     border-color: #bee5eb;
@@ -480,6 +500,64 @@
 // Store warehouse address for comparison
 const warehouseAddress = "{{ current_warehouse.address }}".toLowerCase().trim();
 const msmeName = "{{ current_user.name }}";
+// Map of warehouseId -> full address string
+const warehouseAddresses = {
+    {% for w in user_warehouses %}
+    "{{ w.id }}": "{{ w.address }}, {{ w.city }}, {{ w.state }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+function setOrderType(type) {
+    const indicator = document.getElementById('order-type-indicator');
+    const incomingBtn = document.getElementById('btnIncoming');
+    const outgoingBtn = document.getElementById('btnOutgoing');
+    const orderTypeInput = document.getElementById('order_type');
+    const warehouseSelect = document.getElementById('warehouseSelect');
+
+    orderTypeInput.value = type;
+    if (type === 'incoming') {
+        indicator.textContent = '🔄 Incoming Order (Delivery to your warehouse)';
+        indicator.className = 'order-type-indicator incoming';
+        incomingBtn.classList.add('btn-primary');
+        incomingBtn.classList.remove('btn-outline');
+        outgoingBtn.classList.add('btn-outline');
+        outgoingBtn.classList.remove('btn-primary');
+        warehouseSelect.style.display = '';
+    } else {
+        indicator.textContent = '📤 Outgoing Order (Pickup from your warehouse)';
+        indicator.className = 'order-type-indicator outgoing';
+        outgoingBtn.classList.add('btn-primary');
+        outgoingBtn.classList.remove('btn-outline');
+        incomingBtn.classList.add('btn-outline');
+        incomingBtn.classList.remove('btn-primary');
+        warehouseSelect.style.display = '';
+    }
+
+    autoFillAddresses(true);
+}
+
+function autoFillAddresses(clearOther = false) {
+    const orderTypeInput = document.getElementById('order_type');
+    const pickupAddressField = document.getElementById('pickup_address');
+    const deliveryAddressField = document.getElementById('delivery_address');
+    const warehouseSelectEl = document.getElementById('selected_warehouse_id');
+
+    // Determine selected warehouse address text from select options
+    let selectedWhText = '';
+    if (warehouseSelectEl) {
+        const whId = warehouseSelectEl.value;
+        selectedWhText = warehouseAddresses[whId] || "{{ current_warehouse.address }}, {{ current_warehouse.city }}, {{ current_warehouse.state }}";
+    }
+
+    if (orderTypeInput.value === 'incoming') {
+        // Delivery to warehouse
+        if (deliveryAddressField) deliveryAddressField.value = selectedWhText || "{{ current_warehouse.address }}, {{ current_warehouse.city }}, {{ current_warehouse.state }}";
+        if (clearOther && pickupAddressField) pickupAddressField.value = '';
+    } else {
+        // Outgoing: pickup from warehouse
+        if (pickupAddressField) pickupAddressField.value = selectedWhText || "{{ current_warehouse.address }}, {{ current_warehouse.city }}, {{ current_warehouse.state }}";
+        if (clearOther && deliveryAddressField) deliveryAddressField.value = '';
+    }
+}
 
 function showSection(sectionId) {
     // Hide all sections
@@ -537,6 +615,12 @@ function checkPickupAddress() {
 
 // Add event listener to pickup address field
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize order type
+    setOrderType('outgoing');
+    document.getElementById('btnIncoming').addEventListener('click', () => setOrderType('incoming'));
+    document.getElementById('btnOutgoing').addEventListener('click', () => setOrderType('outgoing'));
+    const warehouseSelectEl = document.getElementById('selected_warehouse_id');
+    if (warehouseSelectEl) warehouseSelectEl.addEventListener('change', () => autoFillAddresses(false));
     const pickupAddressField = document.getElementById('pickup_address');
     if (pickupAddressField) {
         pickupAddressField.addEventListener('input', checkPickupAddress);
@@ -545,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial check
     checkPickupAddress();
+    autoFillAddresses();
 });
 </script>
 {% endblock %}

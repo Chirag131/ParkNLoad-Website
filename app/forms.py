@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, TextAreaField,DateField,TimeField,SelectField, BooleanField
+from wtforms import StringField, SubmitField, IntegerField, TextAreaField,DateField,TimeField,SelectField, BooleanField, HiddenField
 from wtforms.validators import DataRequired, Email,Length,Optional
 
 
@@ -25,6 +25,12 @@ class WarehouseForm(FlaskForm):
 
 
 class OrderForm(FlaskForm):
+    # ------------------------
+    # 0. Order Type & Warehouse
+    # ------------------------
+    order_type = HiddenField("Order Type")  # will be set by UI (incoming/outgoing)
+    selected_warehouse_id = SelectField("Warehouse", coerce=int)
+
     # ------------------------
     # 1. Pickup & Delivery
     # ------------------------

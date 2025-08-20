@@ -98,7 +98,12 @@ window.setActive = setActive;
 
 // Highlight the current page link in the navbar
 function setActiveFromLocation() {
-    const currentPath = window.location.pathname.replace(/\/$/, '');
+    const rawPath = window.location.pathname.replace(/\/$/, '');
+    const PATH_OVERRIDES = {
+        '/msme/add_order': '/msme/orders'
+    };
+    const overridePath = window.NAV_ACTIVE_PATH || PATH_OVERRIDES[rawPath] || null;
+    const currentPath = (overridePath || rawPath);
 
     const allLinks = Array.from(document.querySelectorAll('.nav-link, .mobile-nav-link'))
         .filter(link => link.getAttribute('href') && link.getAttribute('href') !== '#');

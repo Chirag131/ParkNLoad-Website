@@ -214,9 +214,25 @@ def add_order():
         return redirect(url_for('msme.dashboard'))
     
     form = OrderForm()
+    # Populate warehouse choices for order routing
+    user_active_warehouses = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).all()
+    form.selected_warehouse_id.choices = [(w.id, w.name) for w in user_active_warehouses]
+    if current_user.current_warehouse_id:
+        form.selected_warehouse_id.default = current_user.current_warehouse_id
+    # Set default order type
+    if request.method == 'GET':
+        form.order_type.data = 'outgoing'
     
     if form.validate_on_submit():
-        # 1. Save Driver first
+        # 1. Resolve selected warehouse for routing
+        selected_wh = None
+        try:
+            if form.selected_warehouse_id.data:
+                selected_wh = Warehouse.query.filter_by(id=form.selected_warehouse_id.data, user_id=current_user.id).first()
+        except Exception:
+            selected_wh = None
+
+        # 2. Save Driver first
         driver = Driver(
             name=form.driver_name.data,
             phone=form.driver_phone.data,
@@ -225,25 +241,36 @@ def add_order():
         db.session.add(driver)
         db.session.commit()  
 
-        # 2. Determine order type and auto-fill customer name if needed
-        order_type = "outgoing"  # default
+        # 3. Determine order type and auto-fill customer name if needed
+        order_type = (form.order_type.data or "outgoing").strip().lower()
+        if order_type not in ["incoming", "outgoing"]:
+            order_type = "outgoing"
         customer_name = form.customer_name.data
         
-        # If pickup address matches the warehouse address, it's an OUTGOING order; otherwise INCOMING
-        if form.pickup_address.data.lower().strip() == current_warehouse.address.lower().strip():
-            order_type = "outgoing"
-        else:
-            order_type = "incoming"
-            # Auto-fill customer name with MSME details if not provided
+        # 4. Compute addresses based on order type and selected warehouse
+        pickup_address_value = form.pickup_address.data
+        delivery_address_value = form.delivery_address.data
+        def format_wh_address(wh):
+            return f"{wh.address}, {wh.city}, {wh.state}" if wh else ""
+
+        if order_type == "incoming":
+            # Delivery goes to selected warehouse (fallback to current)
+            target_wh = selected_wh or current_warehouse
+            delivery_address_value = format_wh_address(target_wh)
+            # Auto-fill customer name with MSME for incoming if blank
             if not customer_name:
                 customer_name = current_user.name
+        else:
+            # Outgoing: Pickup is from selected warehouse (fallback to current)
+            source_wh = selected_wh or current_warehouse
+            pickup_address_value = format_wh_address(source_wh)
         
-        # 3. Save Order with current warehouse
+        # 5. Save Order with current warehouse
         order = Order(
             user_id=current_user.id,
             warehouse_id=current_user.current_warehouse_id,
-            pickup_address=form.pickup_address.data,
-            delivery_address=form.delivery_address.data,
+            pickup_address=pickup_address_value,
+            delivery_address=delivery_address_value,
             supplier_name=form.supplier_name.data,
             supplier_phone=form.supplier_phone.data,
             customer_name=customer_name,
@@ -264,7 +291,7 @@ def add_order():
         flash("Order created successfully!", "success")
         return redirect(url_for('msme.orders'))
     
-    return render_template("msme/add_order.html", form=form, current_warehouse=current_warehouse)
+    return render_template("msme/add_order.html", form=form, current_warehouse=current_warehouse, user_warehouses=user_active_warehouses)
 
 
 # View order details
@@ -298,6 +325,42 @@ def ltc():
     """Display Live Tracking Center page"""
     return render_template('msme/ltc.html')
 
+
+@msme.route('/inventory')
+@login_required
+def inventory():
+    """Inventory management page - scoped to current warehouse if selected"""
+    current_wh = current_user.current_warehouse
+    # Placeholder inventory dataset; in real app this would query an Inventory model
+    # Here we just derive from recent orders to demonstrate structure
+    orders = Order.query.filter_by(user_id=current_user.id)
+    if current_wh:
+        orders = orders.filter_by(warehouse_id=current_wh.id)
+    orders = orders.order_by(Order.created_at.desc()).all()
+
+    # Group a simple inventory snapshot by package_name
+    inventory_items = {}
+    for o in orders:
+        key = (o.package_name or 'Unknown', o.package_type or 'general')
+        if key not in inventory_items:
+            inventory_items[key] = {
+                'name': o.package_name or 'Unknown',
+                'type': o.package_type or 'general',
+                'quantity': 0,
+                'last_movement': o.created_at,
+            }
+        inventory_items[key]['quantity'] += int(o.quantity or 0)
+        if o.created_at and o.created_at > inventory_items[key]['last_movement']:
+            inventory_items[key]['last_movement'] = o.created_at
+
+    # Convert to list
+    inventory_list = list(inventory_items.values())
+    # Sort by name
+    inventory_list.sort(key=lambda x: x['name'] or '')
+
+    return render_template('msme/inventory.html',
+                           items=inventory_list,
+                           current_warehouse=current_wh)
 
 @msme.route('/update_profile', methods=['POST'])
 @login_required
