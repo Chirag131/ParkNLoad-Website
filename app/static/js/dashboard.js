@@ -1,93 +1,6 @@
-// Profile dropdown functionality
-function toggleProfileDropdown() {
-    const dropdown = document.getElementById('profileDropdown');
-    const profileContainer = document.querySelector('.profile-dropdown');
-    const profileBtn = document.querySelector('.profile-btn');
-    
-    const isActive = dropdown.classList.contains('active');
-    
-    dropdown.classList.toggle('active');
-    profileContainer.classList.toggle('active');
-    
-    // Update ARIA attributes
-    profileBtn.setAttribute('aria-expanded', !isActive);
-}
+// Navbar interactions now handled in navbar.js
 
-function closeProfileDropdown() {
-    const dropdown = document.getElementById('profileDropdown');
-    const profileContainer = document.querySelector('.profile-dropdown');
-    const profileBtn = document.querySelector('.profile-btn');
-    
-    dropdown.classList.remove('active');
-    profileContainer.classList.remove('active');
-    
-    // Update ARIA attributes
-    profileBtn.setAttribute('aria-expanded', 'false');
-}
-
-function showProfile() {
-    // Close dropdown first
-    closeProfileDropdown();
-    // Redirect to profile page
-    window.location.href = '/msme/profile';
-}
-
-// Mobile navigation functionality
-function toggleMobileMenu() {
-    const mobileNav = document.getElementById('mobileNav');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    
-    mobileNav.classList.toggle('active');
-    mobileOverlay.classList.toggle('active');
-    
-    // Prevent body scrolling when menu is open
-    document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : 'auto';
-}
-
-function closeMobileMenu() {
-    const mobileNav = document.getElementById('mobileNav');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    
-    mobileNav.classList.remove('active');
-    mobileOverlay.classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-function setMobileActive(element) {
-    // Remove active class from all mobile nav links
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    element.classList.add('active');
-    
-    // Also update desktop nav if visible
-    const text = element.textContent;
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.textContent === text) {
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-        }
-    });
-    
-    closeMobileMenu();
-}
-
-// Navigation functionality
-function setActive(element) {
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    element.classList.add('active');
-    
-    // Also update mobile nav
-    const text = element.textContent;
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-        if (link.textContent === text) {
-            document.querySelectorAll('.mobile-nav-link').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-        }
-    });
-}
+// Navigation interactions now handled in navbar.js
 
 // Window resize handler for responsive adjustments
 window.addEventListener('resize', function() {
@@ -103,40 +16,7 @@ window.addEventListener('resize', function() {
     }
 });
 
-// Touch event handlers for better mobile interaction
-let touchStartX = 0;
-let touchStartY = 0;
-
-document.addEventListener('touchstart', function(e) {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-});
-
-document.addEventListener('touchend', function(e) {
-    if (!touchStartX || !touchStartY) return;
-
-    let touchEndX = e.changedTouches[0].clientX;
-    let touchEndY = e.changedTouches[0].clientY;
-
-    let diffX = touchStartX - touchEndX;
-    let diffY = touchStartY - touchEndY;
-
-    // Swipe detection (only if horizontal swipe is more significant than vertical)
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-        const mobileNav = document.getElementById('mobileNav');
-        
-        if (diffX > 0 && mobileNav.classList.contains('active')) {
-            // Swipe left - close menu
-            closeMobileMenu();
-        } else if (diffX < -100 && window.innerWidth <= 767 && touchStartX < 50) {
-            // Swipe right from left edge - open menu
-            toggleMobileMenu();
-        }
-    }
-
-    touchStartX = 0;
-    touchStartY = 0;
-});
+// Touch handlers moved to navbar.js if needed
 
 // Stats card animation
 function animateCard(card) {
