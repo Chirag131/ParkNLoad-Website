@@ -315,5 +315,10 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    window.ACTIVE_ORDERS_COUNT = {{ active_orders_count or 0 }};
+    window.MAX_TRUCKS_ON_MAP = 10;
+    window.TRUCKS_TO_SHOW = Math.min(window.ACTIVE_ORDERS_COUNT, window.MAX_TRUCKS_ON_MAP);
+</script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

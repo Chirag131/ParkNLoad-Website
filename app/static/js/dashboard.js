@@ -183,6 +183,11 @@ function toggleWorkspace() {
 // Dashboard Map System - Using LTC Logic
 class DashboardLogisticsSystem {
     constructor() {
+        // Determine how many trucks to simulate based on active orders, capped at 10
+        const maxTrucks = 10;
+        const requestedTrucks = (typeof window !== 'undefined' && window.TRUCKS_TO_SHOW) ? parseInt(window.TRUCKS_TO_SHOW, 10) : 0;
+        this.trucksToShow = Math.max(0, Math.min(maxTrucks, isNaN(requestedTrucks) ? 0 : requestedTrucks));
+
         this.warehouse = {
             center: { lat: 28.48, lng: 77.02 },
             docksAvailable: 1,
@@ -191,7 +196,7 @@ class DashboardLogisticsSystem {
 
         this.zones = this.initializeZones();
         this.trucks = this.initializeTrucks();
-        this.truckQueue = [1, 2, 3, 4, 5, 6, 7, 8];
+        this.truckQueue = Array.from({ length: this.trucksToShow }, (_, i) => i + 1);
         this.map = null;
         this.truckMarkers = new Map();
         this.isPaused = false;
@@ -206,7 +211,8 @@ class DashboardLogisticsSystem {
         const waitingAreas = [];
         const minSeparation = 0.0005; // ~50m
         
-        for (let i = 0; i < 8; i++) {
+        const areasCount = Math.max(1, this.trucksToShow);
+        for (let i = 0; i < areasCount; i++) {
             let placed = false;
             let attempts = 0;
             
@@ -247,7 +253,7 @@ class DashboardLogisticsSystem {
         const trucksArray = [];
         const minTruckSeparation = 0.001; // ~100m
         
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= this.trucksToShow; i++) {
             let placed = false;
             let attempts = 0;
             let lat, lng, angle;
@@ -556,7 +562,7 @@ class DashboardLogisticsSystem {
         this.warehouse.docksAvailable = 1;
         this.zones = this.initializeZones();
         this.trucks = this.initializeTrucks();
-        this.truckQueue = [1, 2, 3, 4, 5, 6, 7, 8];
+        this.truckQueue = Array.from({ length: this.trucksToShow }, (_, i) => i + 1);
         
         // Reinitialize the map
         setTimeout(() => {

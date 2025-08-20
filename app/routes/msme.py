@@ -21,6 +21,10 @@ def dashboard():
     # Get user's warehouses for selection
     user_warehouses = Warehouse.query.filter_by(user_id=current_user.id, is_active=True).all()
     
+    # Active orders (today or future)
+    active_orders_count = Order.query.filter_by(user_id=current_user.id) \
+        .filter(Order.date >= datetime.now().date()).count()
+    
     return render_template('msme/dashboard.html', 
                          warehouse_count=warehouse_count, 
                          recent_orders=recent_orders,
@@ -28,7 +32,8 @@ def dashboard():
                          outgoing_orders=outgoing_orders,
                          user_warehouses=user_warehouses,
                          current_warehouse=current_user.current_warehouse,
-                         now_date=datetime.now().date())
+                         now_date=datetime.now().date(),
+                         active_orders_count=active_orders_count)
 
 
 @msme.route('/set-warehouse/<int:warehouse_id>')
