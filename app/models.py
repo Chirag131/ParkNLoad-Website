@@ -117,10 +117,27 @@ class Driver(db.Model):
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(15), nullable=False)
     truck_no = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    last_location_update = db.Column(db.DateTime)
 
     # Relationship with Order
     orders = db.relationship("Order", back_populates="driver")
+    locations = db.relationship("DriverLocation", back_populates="driver", lazy="dynamic")
 
+
+class DriverLocation(db.Model):
+    __tablename__ = "driver_locations"
+    id = db.Column(db.Integer, primary_key=True)
+    driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    accuracy = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+    
+    # Relationship
+    driver = db.relationship("Driver", back_populates="locations")
 
 # Login Manager
 # ----------------------------

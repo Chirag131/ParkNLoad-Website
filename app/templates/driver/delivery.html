@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Route - ParkNload</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/driver.css') }}">
+    
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .delivery-info {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/drivers/">
+                <i class="fas fa-truck"></i> ParkNload Driver
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white">
+                    <i class="fas fa-user"></i> Driver Access
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="fas fa-route"></i> Delivery Route
+                    </h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success" id="startTracking">
+                            <i class="fas fa-play"></i> Start Tracking
+                        </button>
+                        <button class="btn btn-danger" id="stopTracking" style="display: none;">
+                            <i class="fas fa-stop"></i> Stop Tracking
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Map Column -->
+            <div class="col-lg-8 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-map"></i> Live Route Map
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="map">
+                            <!-- Map will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Info Column -->
+            <div class="col-lg-4 mb-4">
+                <div class="delivery-info">
+                    <h5 class="mb-3">
+                        <i class="fas fa-box"></i> Delivery Details
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <strong>Customer:</strong><br>
+                        <span class="text-primary">{{ delivery.customer }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Phone:</strong><br>
+                        <span class="text-muted">{{ delivery.phone }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Pickup:</strong><br>
+                        <span class="text-success">{{ delivery.pickup }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Delivery:</strong><br>
+                        <span class="text-danger">{{ delivery.delivery }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Status:</strong><br>
+                        <span class="badge bg-warning status-badge" id="deliveryStatus">
+                            In Progress
+                        </span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Current Location:</strong><br>
+                        <div id="currentLocation" class="text-muted">
+                            <i class="fas fa-spinner fa-spin"></i> Getting location...
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Distance to Delivery:</strong><br>
+                        <div id="distanceInfo" class="text-muted">
+                            Calculating...
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-primary w-100 mb-2" id="updateLocation">
+                            <i class="fas fa-map-marker-alt"></i> Update Location
+                        </button>
+                        <button class="btn btn-success w-100" id="markDelivered">
+                            <i class="fas fa-check"></i> Mark as Delivered
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route Summary -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle"></i> Route Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <div class="p-3">
+                                    <i class="fas fa-map-marker-alt fa-2x text-success mb-2"></i>
+                                    <h6>Pickup Point</h6>
+                                    <small class="text-muted">{{ delivery.pickup }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="p-3">
+                                    <i class="fas fa-arrow-right fa-2x text-primary mb-2"></i>
+                                    <h6>Route</h6>
+                                    <small class="text-muted">Mumbai Airport → Bandra</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="col-md-3 text-center">
+                                    <div class="p-3">
+                                        <i class="fas fa-map-marker-alt fa-2x text-danger mb-2"></i>
+                                        <h6>Delivery Point</h6>
+                                        <small class="text-muted">{{ delivery.delivery }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="p-3">
+                                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                    <h6>Estimated Time</h6>
+                                    <small class="text-muted" id="estimatedTime">Calculating...</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAFYGJbsVzSa6XV58zFA8gunivFuLPTCxY&libraries=geometry"></script>
+    
+    <script>
+        let map, currentMarker, deliveryMarker;
+        let isTracking = false;
+        let trackingInterval;
+        
+        // Sample coordinates (you can replace with real addresses)
+        const deliveryCoords = {
+            lat: 19.0760,  // Mumbai coordinates
+            lng: 72.8777
+        };
+        
+        // Initialize map
+        function initMap() {
+            // Default to Mumbai center
+            const defaultCenter = { lat: 19.0760, lng: 72.8777 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: defaultCenter,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "off" }]
+                    }
+                ]
+            });
+            
+            // Add delivery marker
+            deliveryMarker = new google.maps.Marker({
+                position: deliveryCoords,
+                map: map,
+                title: 'Delivery Point',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                }
+            });
+            
+            // Add delivery info window
+            const deliveryInfoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div class="text-center">
+                        <h6>Delivery Point</h6>
+                        <p class="mb-0">{{ delivery.delivery }}</p>
+                    </div>
+                `
+            });
+            
+            deliveryMarker.addListener('click', () => {
+                deliveryInfoWindow.open(map, deliveryMarker);
+            });
+            
+            // Get current location and update map
+            getCurrentLocation();
+        }
+        
+        // Get current location
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const currentPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        updateCurrentLocation(currentPos);
+                        calculateRoute(currentPos, deliveryCoords);
+                    },
+                    (error) => {
+                        console.error('Error getting location:', error);
+                        document.getElementById('currentLocation').innerHTML = 
+                            '<span class="text-danger">Location access denied</span>';
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                document.getElementById('currentLocation').innerHTML = 
+                    '<span class="text-danger">Geolocation not supported</span>';
+            }
+        }
+        
+        // Update current location on map
+        function updateCurrentLocation(position) {
+            // Remove existing current marker
+            if (currentMarker) {
+                currentMarker.setMap(null);
+            }
+            
+            // Add new current location marker
+            currentMarker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'Your Location',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+                }
+            });
+            
+            // Center map on current location
+            map.setCenter(position);
+            
+            // Update location display
+            document.getElementById('currentLocation').innerHTML = `
+                <span class="text-success">
+                    <i class="fas fa-check-circle"></i> 
+                    ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}
+                </span>
+            `;
+            
+            // Send location to server
+            sendLocationToServer(position.lat, position.lng);
+        }
+        
+        // Calculate route between two points
+        function calculateRoute(origin, destination) {
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({
+                suppressMarkers: true, // We'll handle markers ourselves
+                polylineOptions: {
+                    strokeColor: '#4285F4',
+                    strokeWeight: 4
+                }
+            });
+            
+            directionsRenderer.setMap(map);
+            
+            const request = {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+            
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                    
+                    // Calculate distance and time
+                    const route = result.routes[0];
+                    const leg = route.legs[0];
+                    
+                    document.getElementById('distanceInfo').innerHTML = `
+                        <span class="text-primary">
+                            <i class="fas fa-road"></i> ${leg.distance.text}
+                        </span>
+                    `;
+                    
+                    document.getElementById('estimatedTime').innerHTML = `
+                        <span class="text-warning">
+                            <i class="fas fa-clock"></i> ${leg.duration.text}
+                        </span>
+                    `;
+                }
+            });
+        }
+        
+        // Send location to server
+        async function sendLocationToServer(lat, lng) {
+            try {
+                const response = await fetch('/drivers/api/location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lng
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Location updated successfully');
+                }
+            } catch (error) {
+                console.error('Error sending location:', error);
+            }
+        }
+        
+        // Event Listeners
+        document.getElementById('startTracking').addEventListener('click', function() {
+            isTracking = true;
+            this.style.display = 'none';
+            document.getElementById('stopTracking').style.display = 'inline-block';
+            
+            // Start periodic location updates
+            trackingInterval = setInterval(() => {
+                getCurrentLocation();
+            }, 30000); // Update every 30 seconds
+            
+            // Initial update
+            getCurrentLocation();
+        });
+        
+        document.getElementById('stopTracking').addEventListener('click', function() {
+            isTracking = false;
+            this.style.display = 'none';
+            document.getElementById('startTracking').style.display = 'inline-block';
+            
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+            }
+        });
+        
+        document.getElementById('updateLocation').addEventListener('click', function() {
+            getCurrentLocation();
+        });
+        
+        document.getElementById('markDelivered').addEventListener('click', function() {
+            if (confirm('Mark this delivery as completed?')) {
+                document.getElementById('deliveryStatus').textContent = 'Delivered';
+                document.getElementById('deliveryStatus').className = 'badge bg-success status-badge';
+                
+                // Show success message
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Delivered!';
+                btn.className = 'btn btn-success w-100';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.className = 'btn btn-success w-100';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        });
+        
+        // Initialize map when page loads
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
