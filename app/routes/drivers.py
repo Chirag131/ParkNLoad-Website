@@ -22,7 +22,7 @@ def verify_otp():
         # Get a sample delivery (you can modify this logic)
         delivery = {
         'pickup': 'Okhla Industrial Area Phase-II, New Delhi',
-        'delivery': 'Patparganj Industrial Area, East Delhi',
+        'delivery': 'Bandra, Mumbai',
         'customer': 'Rajesh Kumar',
         'phone': '+91-98111-22334',
         'goods': 'Electrical Components',
